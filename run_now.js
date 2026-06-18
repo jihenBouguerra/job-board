@@ -4,11 +4,12 @@ const crypto = require("node:crypto");
 const { DatabaseSync } = require("node:sqlite");
 
 const root = __dirname;
+const dataDir = process.env.DATA_DIR || root;
 const config = JSON.parse(fs.readFileSync(path.join(root, "job_search_config.json"), "utf8"));
 const jobSources = JSON.parse(fs.readFileSync(path.join(root, "job_sources.json"), "utf8"));
 const dryRun = process.env.JOB_RESEARCH_DRY_RUN === "1" || process.env.JOB_RESEARCH_DRY_RUN === "true";
 
-const db = new DatabaseSync(path.join(root, "jobs.db"));
+const db = new DatabaseSync(path.join(dataDir, "jobs.db"));
 db.exec(`
   CREATE TABLE IF NOT EXISTS jobs (
     id TEXT PRIMARY KEY,
@@ -1326,7 +1327,7 @@ async function main() {
     skippedErrors: skippedErrors.slice(0, 20)
   };
 
-  fs.writeFileSync(path.join(root, "last_run_report.json"), JSON.stringify(report, null, 2) + "\n");
+  fs.writeFileSync(path.join(dataDir, "last_run_report.json"), JSON.stringify(report, null, 2) + "\n");
   console.log(JSON.stringify(report, null, 2));
 }
 

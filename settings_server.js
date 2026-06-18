@@ -5,12 +5,14 @@ const { spawn } = require("child_process");
 const { DatabaseSync } = require("node:sqlite");
 
 const root = __dirname;
+const dataDir = process.env.DATA_DIR || root;
 const configPath = path.join(root, "job_search_config.json");
 const sourcesPath = path.join(root, "job_sources.json");
 const pagePath = path.join(root, "settings.html");
 const indexPath = path.join(root, "index.html");
 
-const db = new DatabaseSync(path.join(root, "jobs.db"));
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+const db = new DatabaseSync(path.join(dataDir, "jobs.db"));
 db.exec(`
   CREATE TABLE IF NOT EXISTS jobs (
     id TEXT PRIMARY KEY,
@@ -360,7 +362,22 @@ function normalizeConfig(input) {
   return next;
 }
 
+const BASIC_AUTH = process.env.BASIC_AUTH; // "username:password"
+
+function checkAuth(req, res) {
+  if (!BASIC_AUTH) return true;
+  const auth = req.headers["authorization"] || "";
+  if (auth.startsWith("Basic ")) {
+    const decoded = Buffer.from(auth.slice(6), "base64").toString();
+    if (decoded === BASIC_AUTH) return true;
+  }
+  res.writeHead(401, { "WWW-Authenticate": 'Basic realm="Job Board"', "Content-Type": "text/plain" });
+  res.end("Unauthorized");
+  return false;
+}
+
 const server = http.createServer(async (req, res) => {
+  if (!checkAuth(req, res)) return;
   try {
     if (req.method === "GET" && req.url === "/") {
       send(res, 200, fs.readFileSync(indexPath, "utf8"), "text/html; charset=utf-8");
