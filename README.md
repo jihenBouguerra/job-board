@@ -7,7 +7,6 @@ A personal job aggregator that scrapes multiple job boards daily, stores results
 ## Features
 
 - **Multi-source scraping** — LinkedIn, jobs.lu, Moovijob, ICTJob, Indeed Luxembourg
-- **Notion-style table** — sortable columns: Title, Company, Country, Mode, Salary, Benefits, Technologies, Posted
 - **Smart filters** — search, country, work mode, status, and date range (7 / 14 / 30 days)
 - **Status tracking** — mark jobs as New / Saved / Applied / Rejected with one click or keyboard shortcuts
 - **Per-job notes** — auto-saved with 800 ms debounce
@@ -28,10 +27,6 @@ git clone <repo-url>
 cd "Job Research"
 node settings_server.js
 ```
-
-Then open:
-- **Job board:** http://127.0.0.1:8765
-- **Settings:** http://127.0.0.1:8765/settings
 
 ## Configuration
 
