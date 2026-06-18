@@ -1,11 +1,10 @@
-app = "jihenb-job-board"
-primary_region = "cdg"
+app = "job-board-lxn7-q"
+primary_region = "ams"
 
 [build]
 
 [env]
   DATA_DIR = "/data"
-  PORT = "8765"
 
 [http_service]
   internal_port = 8765
