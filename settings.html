@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f0f14">
+    <title>Job Search Settings</title>
+    <style>
+      :root {
+        --bg:          #0f0f14;
+        --surface:     #1a1a23;
+        --surface-2:   #232330;
+        --border:      #2e2e3e;
+        --text:        #ececf1;
+        --text-dim:    #9494a8;
+        --accent:      #8b7cf6;
+        --accent-soft: rgba(139, 124, 246, 0.15);
+        --green:       #4ade80;
+        --red:         #f87171;
+        --radius:      16px;
+        color-scheme: dark;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html, body { min-height: 100%; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        overscroll-behavior-y: none;
+      }
+
+      main {
+        width: min(1120px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: calc(env(safe-area-inset-top) + 24px) 0 calc(env(safe-area-inset-bottom) + 48px);
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+        min-height: 84px;
+        padding: 18px 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.6rem;
+        line-height: 1.1;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+
+      h1 .mark { color: var(--accent); }
+
+      .muted {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        line-height: 1.45;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+        gap: 16px;
+      }
+
+      section,
+      aside {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px;
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+        line-height: 1.25;
+        color: var(--text);
+      }
+
+      .group {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      label.toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 38px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 7px 14px;
+        background: var(--surface-2);
+        color: var(--text-dim);
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+      }
+
+      label.toggle:active { background: var(--surface-2); }
+      label.toggle:has(input:checked) {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      label.toggle input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--accent);
+      }
+
+      textarea,
+      input[type="number"] {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font: inherit;
+        font-size: 1rem;
+        color: var(--text);
+        background: var(--bg);
+        outline: none;
+      }
+
+      textarea::placeholder,
+      input[type="number"]::placeholder { color: var(--text-dim); }
+
+      textarea:focus,
+      input[type="number"]:focus {
+        border-color: var(--accent);
+      }
+
+      .number-control {
+        max-width: 180px;
+      }
+
+      textarea {
+        min-height: 188px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 13px;
+        background: var(--accent);
+        color: #fff;
+        min-height: 40px;
+        padding: 0 18px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s, transform 0.1s;
+      }
+
+      button:active { transform: scale(0.97); opacity: 0.85; }
+
+      button.secondary {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      button.danger {
+        background: rgba(248, 113, 113, 0.12);
+        color: var(--red);
+      }
+
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .status {
+        min-height: 20px;
+        margin-top: 10px;
+        font-size: 0.85rem;
+      }
+
+      .run-report {
+        display: none;
+        margin-top: 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg);
+        padding: 14px;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        max-height: 360px;
+        overflow: auto;
+        white-space: pre-wrap;
+        color: var(--text);
+        box-shadow: inset 3px 0 0 var(--accent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .source-list {
+        display: grid;
+        gap: 10px;
+        max-height: 604px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .source {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px 10px;
+        align-items: start;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        background: var(--surface-2);
+      }
+
+      .source input {
+        margin-top: 2px;
+        accent-color: var(--accent);
+      }
+
+      .source strong {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--text);
+      }
+
+      .source a {
+        color: var(--accent);
+        font-size: 0.8rem;
+        word-break: break-word;
+      }
+
+      .source-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .source-tools button {
+        min-height: 32px;
+        padding: 0 12px;
+        font-size: 0.82rem;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+
+      /* Scrollbars */
+      .source-list::-webkit-scrollbar,
+      .run-report::-webkit-scrollbar { width: 8px; }
+      .source-list::-webkit-scrollbar-thumb,
+      .run-report::-webkit-scrollbar-thumb {
+        background: var(--border); border-radius: 999px;
+      }
+
+      @media (max-width: 820px) {
+        header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .actions { justify-content: stretch; }
+        .actions button { flex: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1><span class="mark">✦</span> Settings</h1>
+          <div class="muted">Search configuration & scheduling</div>
+        </div>
+        <div class="actions">
+          <a href="/" style="text-decoration:none"><button type="button" class="secondary">← Jobs</button></a>
+          <button id="runNow" class="secondary">Run now</button>
+          <button id="stopRun" class="danger" disabled>Stop run</button>
+          <button id="save">Save settings</button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <section>
+          <div class="group">
+            <h2>Countries</h2>
+            <div class="chips">
+              <label class="toggle"><input id="country-luxembourg" type="checkbox"> Luxembourg</label>
+              <label class="toggle"><input id="country-germany" type="checkbox"> Germany</label>
+              <label class="toggle"><input id="country-saudi_arabia" type="checkbox"> Saudi Arabia</label>
+              <label class="toggle"><input id="country-qatar" type="checkbox"> Qatar</label>
+              <label class="toggle"><input id="country-oman" type="checkbox"> Oman</label>
+              <label class="toggle"><input id="country-bahrain" type="checkbox"> Bahrain</label>
+              <label class="toggle"><input id="country-kuwait" type="checkbox"> Kuwait</label>
+              <label class="toggle"><input id="country-united_arab_emirates" type="checkbox"> United Arab Emirates</label>
+            </div>
+          </div>
+
+          <div class="group">
+            <h2>Work Mode</h2>
+            <div class="chips">
+              <label class="toggle"><input id="mode-remote" type="checkbox"> Remote</label>
+              <label class="toggle"><input id="mode-hybrid" type="checkbox"> Hybrid</label>
+              <label class="toggle"><input id="mode-onsite" type="checkbox"> On-site</label>
+            </div>
+          </div>
+
+          <div class="group">
+            <h2>Role Keywords</h2>
+            <textarea id="roles" spellcheck="false"></textarea>
+          </div>
+
+          <div class="group">
+            <h2>Max Posting Age</h2>
+            <input id="maxPostingAgeDays" class="number-control" type="number" min="1" placeholder="All">
+            <div class="muted">Leave empty to include all posting ages. Enter a number only if you want an age cap.</div>
+          </div>
+
+          <div class="group">
+            <h2>Safety</h2>
+            <div class="chips">
+              <label class="toggle"><input id="strictLinkCheck" type="checkbox"> Verify job links before insert</label>
+            </div>
+          </div>
+
+          <div class="group">
+            <h2>Daily Schedule</h2>
+            <div class="chips">
+              <label class="toggle"><input id="schedEnabled" type="checkbox"> Run automatically every day</label>
+            </div>
+            <div id="schedTimeRow" style="display:none;align-items:center;gap:10px;margin-top:6px">
+              <span class="muted" style="font-size:0.85rem">Run at</span>
+              <input id="schedHour" type="number" class="number-control" min="0" max="23" placeholder="8" style="max-width:72px">
+              <span class="muted">h</span>
+              <input id="schedMinute" type="number" class="number-control" min="0" max="59" placeholder="0" style="max-width:72px">
+              <span class="muted">min</span>
+            </div>
+            <div id="nextRunInfo" class="muted" style="font-size:0.8rem;margin-top:4px"></div>
+          </div>
+
+          <div id="status" class="status muted"></div>
+          <div id="runReport" class="run-report"></div>
+        </section>
+
+        <aside>
+          <h2>Active Sources</h2>
+          <div class="source-tools">
+            <button id="selectAllSources" type="button">Select all</button>
+            <button id="clearSources" type="button">Clear all</button>
+          </div>
+          <div id="sources" class="source-list"></div>
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      const ids = {
+        countries: {
+          luxembourg: "country-luxembourg",
+          germany: "country-germany",
+          saudi_arabia: "country-saudi_arabia",
+          qatar: "country-qatar",
+          oman: "country-oman",
+          bahrain: "country-bahrain",
+          kuwait: "country-kuwait",
+          united_arab_emirates: "country-united_arab_emirates"
+        },
+        workModes: {
+          remote: "mode-remote",
+          hybrid: "mode-hybrid",
+          onsite: "mode-onsite"
+        }
+      };
+
+      const fallbackData = {
+        config: {
+          countries: {
+            luxembourg: false,
+            germany: true,
+            saudi_arabia: true,
+            qatar: true,
+            oman: true,
+            bahrain: true,
+            kuwait: true,
+            united_arab_emirates: true
+          },
+          workModes: {
+            remote: true,
+            hybrid: false,
+            onsite: false
+          },
+          roleKeywords: [
+            "software engineer",
+            "developer",
+            "backend engineer",
+            "full stack engineer",
+            "data engineer",
+            "BI engineer",
+            "analytics engineer",
+            "AI engineer",
+            "machine learning engineer",
+            "cloud data engineer",
+            "data platform engineer"
+          ],
+          enabledSources: {
+            luxembourg: [],
+            germany: ["LinkedIn Germany"],
+            saudi_arabia: ["LinkedIn Saudi Arabia"],
+            qatar: ["LinkedIn Qatar"],
+            oman: ["LinkedIn Oman"],
+            bahrain: ["LinkedIn Bahrain"],
+            kuwait: ["LinkedIn Kuwait"],
+            united_arab_emirates: ["LinkedIn United Arab Emirates"]
+          },
+          maxPostingAgeDays: null,
+          strictLinkCheck: true
+        },
+        sources: {
+          luxembourg: [
+            { name: "LinkedIn Luxembourg", url: "https://lu.linkedin.com/jobs", notes: "Use search result pages and direct job URLs when accessible." },
+            { name: "jobs.lu", url: "https://en.jobs.lu", notes: "Primary Luxembourg job board." },
+            { name: "Moovijob Luxembourg", url: "https://www.moovijob.com", notes: "Search English/French/German Luxembourg listings." },
+            { name: "ICTjob Luxembourg", url: "https://www.ictjob.lu", notes: "IT-focused Luxembourg roles." },
+            { name: "Indeed Luxembourg", url: "https://lu.indeed.com", notes: "Use cautiously; verify direct employer/apply pages." },
+            { name: "Monster Luxembourg", url: "https://www.monster.lu", notes: "General job board." },
+            { name: "Jobfinder Luxembourg", url: "https://www.jobfinder.lu", notes: "Luxembourg listings." },
+            { name: "jobsinluxembourg.eu", url: "https://www.jobsinluxembourg.eu", notes: "English-language Luxembourg roles." },
+            { name: "ADEM JobBoard", url: "https://adem.public.lu", notes: "Official Luxembourg employment portal." },
+            { name: "Silicon Luxembourg Jobs", url: "https://www.siliconluxembourg.lu", notes: "Luxembourg tech/startup ecosystem." },
+            { name: "LuxProvide Careers", url: "https://luxprovide.lu", notes: "AI, HPC, data and solution engineering." },
+            { name: "POST Luxembourg Careers", url: "https://www.postgroup.lu", notes: "Data, AI, platform and telecom IT roles." },
+            { name: "University of Luxembourg Careers", url: "https://www.uni.lu", notes: "Research software, AI, data roles." },
+            { name: "LIST Careers", url: "https://www.list.lu", notes: "Research, AI, data, industrial tech roles." },
+            { name: "Luxembourg Institute of Health Careers", url: "https://www.lih.lu", notes: "Health data and software roles." },
+            { name: "EIB Careers", url: "https://www.eib.org", notes: "Finance, AI, analytics and data roles in Luxembourg." },
+            { name: "Amazon Luxembourg Jobs", url: "https://www.amazon.jobs", notes: "Software/data/BI roles in Luxembourg." },
+            { name: "Big 4 Luxembourg Careers", url: "https://www.google.com/search?q=Luxembourg+PwC+Deloitte+EY+KPMG+data+AI+engineer+jobs", notes: "Search PwC, Deloitte, EY, KPMG Luxembourg career pages." }
+          ],
+          germany: [
+            { name: "LinkedIn Germany", url: "https://de.linkedin.com/jobs", notes: "Filter Germany plus selected work modes." },
+            { name: "StepStone Germany", url: "https://www.stepstone.de", notes: "Major German job board." },
+            { name: "Indeed Germany", url: "https://de.indeed.com", notes: "Use with direct-link verification." },
+            { name: "XING Jobs", url: "https://www.xing.com/jobs", notes: "Germany-focused professional network." },
+            { name: "Arbeitsagentur Jobbörse", url: "https://www.arbeitsagentur.de/jobsuche", notes: "Official German job board." },
+            { name: "Honeypot", url: "https://www.honeypot.io", notes: "Tech roles in Germany." },
+            { name: "GermanTechJobs", url: "https://germantechjobs.de", notes: "Developer and data engineering roles." },
+            { name: "WeAreDevelopers Jobs", url: "https://www.wearedevelopers.com/en/jobs", notes: "Software engineering roles." },
+            { name: "Berlin Startup Jobs", url: "https://berlinstartupjobs.com", notes: "Startup tech roles, often remote/hybrid." },
+            { name: "JOIN", url: "https://join.com", notes: "German and EU startup/company roles." },
+            { name: "Wellfound", url: "https://wellfound.com/jobs", notes: "Startup roles, filter Germany or remote Europe." },
+            { name: "RemoteOK", url: "https://remoteok.com", notes: "Remote roles; verify Europe/Germany eligibility." },
+            { name: "Otta / Welcome to the Jungle", url: "https://www.welcometothejungle.com", notes: "Tech/company roles; use Germany and remote filters." },
+            { name: "Company career pages Germany", url: "https://www.google.com/search?q=Germany+data+engineer+software+engineer+AI+engineer+careers", notes: "Search SAP, Siemens, Bosch, Mercedes-Benz, BMW, VW, Zalando, Delivery Hero, Celonis, N26, Trade Republic, HelloFresh, Flix, Personio, Deutsche Bank, Allianz, Munich Re, Deutsche Telekom, Schwarz IT, Bayer, Merck, and relevant consultancies." }
+          ]
+        }
+      };
+
+      let sources = {};
+      let selectedSources = Object.fromEntries(Object.keys(ids.countries).map(country => [country, new Set()]));
+      let runLogTimer = null;
+      let activeClientRun = 0;
+
+      function el(id) {
+        return document.getElementById(id);
+      }
+
+      function readForm() {
+        const countries = Object.fromEntries(
+          Object.entries(ids.countries).map(([country, id]) => [country, el(id).checked])
+        );
+        const enabledSources = Object.fromEntries(
+          Object.keys(ids.countries).map(country => [country, [...(selectedSources[country] || new Set())]])
+        );
+        return {
+          countries,
+          workModes: {
+            remote: el(ids.workModes.remote).checked,
+            hybrid: el(ids.workModes.hybrid).checked,
+            onsite: el(ids.workModes.onsite).checked
+          },
+          enabledSources,
+          roleKeywords: el("roles").value.split(/\n|,/).map(item => item.trim()).filter(Boolean),
+          maxPostingAgeDays: el("maxPostingAgeDays").value.trim() === "" ? null : Number(el("maxPostingAgeDays").value),
+          strictLinkCheck: el("strictLinkCheck").checked,
+          schedule: {
+            enabled: el("schedEnabled").checked,
+            hour: el("schedHour").value.trim() === "" ? 8 : Number(el("schedHour").value),
+            minute: el("schedMinute").value.trim() === "" ? 0 : Number(el("schedMinute").value)
+          }
+        };
+      }
+
+      function writeForm(config) {
+        for (const [key, id] of Object.entries(ids.countries)) {
+          el(id).checked = Boolean(config.countries[key]);
+        }
+        for (const [key, id] of Object.entries(ids.workModes)) {
+          el(id).checked = Boolean(config.workModes[key]);
+        }
+        selectedSources = Object.fromEntries(
+          Object.keys(ids.countries).map(country => [country, new Set(config.enabledSources?.[country] || [])])
+        );
+        el("roles").value = config.roleKeywords.join("\n");
+        el("maxPostingAgeDays").value = config.maxPostingAgeDays ?? "";
+        el("strictLinkCheck").checked = Boolean(config.strictLinkCheck);
+        const sched = config.schedule || {};
+        el("schedEnabled").checked = Boolean(sched.enabled);
+        el("schedHour").value   = sched.hour   ?? 8;
+        el("schedMinute").value = sched.minute  ?? 0;
+        el("schedTimeRow").style.display = sched.enabled ? "flex" : "none";
+        renderSources();
+      }
+
+      el("schedEnabled").addEventListener("change", () => {
+        el("schedTimeRow").style.display = el("schedEnabled").checked ? "flex" : "none";
+      });
+
+      async function refreshNextRun() {
+        try {
+          const res = await fetch("/api/run-status");
+          const data = await res.json();
+          if (data.nextRun) {
+            const d = new Date(data.nextRun);
+            el("nextRunInfo").textContent = `Next scheduled run: ${d.toLocaleString(undefined, { weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" })}`;
+          } else {
+            el("nextRunInfo").textContent = "";
+          }
+        } catch { el("nextRunInfo").textContent = ""; }
+      }
+      refreshNextRun();
+
+      function renderSources() {
+        const config = readForm();
+        const active = Object.entries(config.countries)
+          .filter(([, enabled]) => enabled)
+          .flatMap(([country]) => (sources[country] || []).map(source => ({ ...source, country })));
+
+        el("sources").innerHTML = active.map(source => `
+          <div class="source">
+            <input class="source-check" type="checkbox" data-country="${source.country}" data-name="${source.name}" ${selectedSources[source.country]?.has(source.name) ? "checked" : ""}>
+            <div>
+              <strong>${source.name}</strong>
+              <a href="${source.url}" target="_blank" rel="noreferrer">${source.url}</a>
+              <div class="muted">${source.notes}</div>
+            </div>
+          </div>
+        `).join("") || `<div class="muted">Select at least one country.</div>`;
+      }
+
+      function setVisibleSources(checked) {
+        const config = readForm();
+        for (const [country, enabled] of Object.entries(config.countries)) {
+          if (!enabled) continue;
+          for (const source of sources[country] || []) {
+            if (checked) selectedSources[country].add(source.name);
+            else selectedSources[country].delete(source.name);
+          }
+        }
+        renderSources();
+      }
+
+      function updateSourceSelection(target) {
+        if (!target.classList.contains("source-check")) return;
+        const country = target.dataset.country;
+        const name = target.dataset.name;
+        if (!selectedSources[country]) selectedSources[country] = new Set();
+        if (target.checked) selectedSources[country].add(name);
+        else selectedSources[country].delete(name);
+      }
+
+      async function load() {
+        try {
+          const response = await fetch("/api/config");
+          if (!response.ok) throw new Error("Config server unavailable");
+          const data = await response.json();
+          sources = data.sources;
+          writeForm(data.config);
+        } catch {
+          sources = fallbackData.sources;
+          writeForm(fallbackData.config);
+          el("status").textContent = "Showing saved values. Open http://127.0.0.1:8765 to save or run.";
+        }
+      }
+
+      async function save() {
+        const button = el("save");
+        button.disabled = true;
+        el("status").textContent = "Saving...";
+        try {
+          const response = await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(readForm())
+          });
+          if (!response.ok) throw new Error("Save failed");
+          const data = await response.json();
+          writeForm(data.config);
+          el("status").textContent = "Saved. The next 8 AM worker run will use this config.";
+        } catch (error) {
+          el("status").textContent = error.message;
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      function showRunReport(lines) {
+        const reportBox = el("runReport");
+        reportBox.style.display = "block";
+        reportBox.textContent = lines.filter(line => line !== undefined && line !== null).join("\n");
+        reportBox.scrollTop = reportBox.scrollHeight;
+      }
+
+      function clearRunReport() {
+        const reportBox = el("runReport");
+        reportBox.style.display = "block";
+        reportBox.textContent = "";
+        reportBox.scrollTop = 0;
+      }
+
+      async function refreshRunLog(clientRun = activeClientRun) {
+        if (clientRun !== activeClientRun) return;
+        try {
+          const response = await fetch("/api/run-status");
+          if (!response.ok) return;
+          if (clientRun !== activeClientRun) return;
+          const data = await response.json();
+          const run = data.run || {};
+          const logs = run.logs || [];
+          const state = run.stopping ? "Stopping..." : "Live logs:";
+          if (logs.length > 0 || run.active) {
+            showRunReport([
+              run.startedAt ? `Run started: ${new Date(run.startedAt).toLocaleString()}` : "Run started.",
+              "",
+              state,
+              logs.join("\n") || "- waiting for first log..."
+            ]);
+          }
+          if (!run.active && runLogTimer) {
+            clearInterval(runLogTimer);
+            runLogTimer = null;
+          }
+        } catch {
+          // The final report request will surface any useful error.
+        }
+      }
+
+      function startRunLogPolling(clientRun) {
+        if (runLogTimer) clearInterval(runLogTimer);
+        runLogTimer = setInterval(() => refreshRunLog(clientRun), 1000);
+      }
+
+      function stopRunLogPolling() {
+        if (!runLogTimer) return;
+        clearInterval(runLogTimer);
+        runLogTimer = null;
+      }
+
+      function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      async function waitForRunCompletion(clientRun) {
+        while (clientRun === activeClientRun) {
+          const response = await fetch("/api/run-status");
+          if (!response.ok) throw new Error("Could not read run status");
+          const data = await response.json();
+          const run = data.run || {};
+          if (!run.active) {
+            if (run.error) throw new Error(run.error);
+            return run.result || {};
+          }
+          await wait(2000);
+        }
+        return null;
+      }
+
+      async function runNow() {
+        const clientRun = activeClientRun + 1;
+        activeClientRun = clientRun;
+        const saveButton = el("save");
+        const runButton = el("runNow");
+        const stopButton = el("stopRun");
+        saveButton.disabled = true;
+        runButton.disabled = true;
+        stopButton.disabled = false;
+        el("status").textContent = "Saving settings and running now...";
+        stopRunLogPolling();
+        clearRunReport();
+        showRunReport([
+          `Run started: ${new Date().toLocaleString()}`,
+          "Previous run log cleared.",
+          "Saving settings..."
+        ]);
+
+        try {
+          const prepareResponse = await fetch("/api/prepare-run", { method: "POST" });
+          if (!prepareResponse.ok) throw new Error("Could not prepare a fresh run");
+          if (clientRun !== activeClientRun) return;
+          showRunReport([
+            `Run started: ${new Date().toLocaleString()}`,
+            "Previous run log cleared.",
+            "Saving settings..."
+          ]);
+          const saveResponse = await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(readForm())
+          });
+          if (!saveResponse.ok) throw new Error("Save failed");
+          if (clientRun !== activeClientRun) return;
+          showRunReport([
+            `Run started: ${new Date().toLocaleString()}`,
+            "Previous run log cleared.",
+            "Settings saved.",
+            "Searching sources and analyzing job posts one by one..."
+          ]);
+          startRunLogPolling(clientRun);
+
+          const runResponse = await fetch("/api/run-now", { method: "POST" });
+          const started = await runResponse.json();
+          if (clientRun !== activeClientRun) return;
+          if (!runResponse.ok || !started.ok) throw new Error(started.error || "Run failed to start");
+
+          const report = await waitForRunCompletion(clientRun);
+          if (clientRun !== activeClientRun || !report) return;
+          stopRunLogPolling();
+          const inserted = (report.inserted || [])
+            .map(job => `- ${job.name} — ${job.company} (${job.fitScore})`)
+            .join("\n") || "- none";
+
+          el("status").textContent = "Run finished.";
+          const liveLogs = el("runReport").textContent;
+          showRunReport([
+            liveLogs,
+            "",
+            "Final result:",
+            `Date: ${report.runDate}`,
+            `Found: ${report.found}`,
+            `Inserted: ${report.insertedCount}`,
+            `Skipped work mode: ${report.skippedWorkModeCount || 0}`,
+            `Skipped older than max age: ${report.skippedAgeCount || 0}`,
+            `Skipped low fit: ${report.skippedLowFitCount || 0}`,
+            `Skipped duplicates: ${report.skippedDuplicatesCount}`,
+            `Skipped broken/unverified links: ${report.skippedBrokenLinksCount}`,
+            "",
+            "Skipped details:",
+            [
+              ...(report.skippedWorkMode || []).slice(0, 5).map(item => `- work mode: ${item}`),
+              ...(report.skippedAge || []).slice(0, 5).map(item => `- age: ${item}`),
+              ...(report.skippedLowFit || []).slice(0, 5).map(item => `- low fit: ${item}`)
+            ].join("\n") || "- none",
+            "",
+            "Inserted jobs:",
+            inserted
+          ]);
+        } catch (error) {
+          if (clientRun !== activeClientRun) return;
+          el("status").textContent = error.message;
+          showRunReport([
+            el("runReport").textContent,
+            "",
+            `Error: ${error.message}`
+          ]);
+        } finally {
+          if (clientRun === activeClientRun) {
+            stopRunLogPolling();
+            saveButton.disabled = false;
+            runButton.disabled = false;
+            stopButton.disabled = true;
+          }
+        }
+      }
+
+      async function stopRun() {
+        const stopButton = el("stopRun");
+        stopButton.disabled = true;
+        el("status").textContent = "Stopping run...";
+        showRunReport([
+          el("runReport").textContent || `Stop requested: ${new Date().toLocaleString()}`,
+          "Stop requested. Waiting for the worker to halt..."
+        ]);
+
+        try {
+          const response = await fetch("/api/stop-run", { method: "POST" });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(data.error || "Stop failed");
+          el("status").textContent = data.stopped ? "Run stopped." : "No active run.";
+          await refreshRunLog(activeClientRun);
+          showRunReport([
+            el("runReport").textContent,
+            data.stopped ? "Run stopped by user." : "No active run was found."
+          ]);
+        } catch (error) {
+          el("status").textContent = error.message;
+        }
+      }
+
+      document.addEventListener("change", event => {
+        updateSourceSelection(event.target);
+        if (!event.target.classList.contains("source-check")) renderSources();
+      });
+      el("save").addEventListener("click", save);
+      el("runNow").addEventListener("click", runNow);
+      el("stopRun").addEventListener("click", stopRun);
+      el("selectAllSources").addEventListener("click", () => setVisibleSources(true));
+      el("clearSources").addEventListener("click", () => setVisibleSources(false));
+      load();
+    </script>
+  </body>
+</html>

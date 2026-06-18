@@ -1,0 +1,12 @@
+node_modules/
+jobs.db
+jobs.db-wal
+jobs.db-shm
+.env
+.notion_token
+last_run_report.json
+*.log
+__pycache__/
+*.json.backup
+notion_jobs_export_*.json
+notion_jobs_backup_*.json

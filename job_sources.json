@@ -1,0 +1,388 @@
+{
+  "luxembourg": [
+    {
+      "name": "LinkedIn Luxembourg",
+      "url": "https://lu.linkedin.com/jobs",
+      "notes": "Use search result pages and direct job URLs when accessible."
+    },
+    {
+      "name": "jobs.lu",
+      "url": "https://en.jobs.lu",
+      "notes": "Primary Luxembourg job board."
+    },
+    {
+      "name": "Moovijob Luxembourg",
+      "url": "https://www.moovijob.com",
+      "notes": "Search English/French/German Luxembourg listings."
+    },
+    {
+      "name": "ICTjob Luxembourg",
+      "url": "https://www.ictjob.lu",
+      "notes": "IT-focused Luxembourg roles."
+    },
+    {
+      "name": "Indeed Luxembourg",
+      "url": "https://lu.indeed.com",
+      "notes": "Use cautiously; verify direct employer/apply pages."
+    },
+    {
+      "name": "Monster Luxembourg",
+      "url": "https://www.monster.lu",
+      "notes": "General job board."
+    },
+    {
+      "name": "Jobfinder Luxembourg",
+      "url": "https://www.jobfinder.lu",
+      "notes": "Luxembourg listings."
+    },
+    {
+      "name": "jobsinluxembourg.eu",
+      "url": "https://www.jobsinluxembourg.eu",
+      "notes": "English-language Luxembourg roles."
+    },
+    {
+      "name": "ADEM JobBoard",
+      "url": "https://adem.public.lu",
+      "notes": "Official Luxembourg employment portal."
+    },
+    {
+      "name": "Silicon Luxembourg Jobs",
+      "url": "https://www.siliconluxembourg.lu",
+      "notes": "Luxembourg tech/startup ecosystem."
+    },
+    {
+      "name": "LuxProvide Careers",
+      "url": "https://luxprovide.lu",
+      "notes": "AI, HPC, data and solution engineering."
+    },
+    {
+      "name": "POST Luxembourg Careers",
+      "url": "https://www.postgroup.lu",
+      "notes": "Data, AI, platform and telecom IT roles."
+    },
+    {
+      "name": "University of Luxembourg Careers",
+      "url": "https://www.uni.lu",
+      "notes": "Research software, AI, data roles."
+    },
+    {
+      "name": "LIST Careers",
+      "url": "https://www.list.lu",
+      "notes": "Research, AI, data, industrial tech roles."
+    },
+    {
+      "name": "Luxembourg Institute of Health Careers",
+      "url": "https://www.lih.lu",
+      "notes": "Health data and software roles."
+    },
+    {
+      "name": "EIB Careers",
+      "url": "https://www.eib.org",
+      "notes": "Finance, AI, analytics and data roles in Luxembourg."
+    },
+    {
+      "name": "Amazon Luxembourg Jobs",
+      "url": "https://www.amazon.jobs",
+      "notes": "Software/data/BI roles in Luxembourg."
+    },
+    {
+      "name": "PwC Luxembourg Careers",
+      "url": "https://www.pwc.lu/en/careers.html",
+      "notes": "PwC Luxembourg career page; search data, AI, software, analytics and consulting technology roles."
+    }
+  ],
+  "germany": [
+    {
+      "name": "LinkedIn Germany",
+      "url": "https://de.linkedin.com/jobs",
+      "notes": "Filter Germany plus selected work modes."
+    },
+    {
+      "name": "StepStone Germany",
+      "url": "https://www.stepstone.de",
+      "notes": "Major German job board."
+    },
+    {
+      "name": "Indeed Germany",
+      "url": "https://de.indeed.com",
+      "notes": "Use with direct-link verification."
+    },
+    {
+      "name": "XING Jobs",
+      "url": "https://www.xing.com/jobs",
+      "notes": "Germany-focused professional network."
+    },
+    {
+      "name": "Arbeitsagentur Jobbörse",
+      "url": "https://www.arbeitsagentur.de/jobsuche",
+      "notes": "Official German job board."
+    },
+    {
+      "name": "Honeypot",
+      "url": "https://www.honeypot.io",
+      "notes": "Tech roles in Germany."
+    },
+    {
+      "name": "GermanTechJobs",
+      "url": "https://germantechjobs.de",
+      "notes": "Developer and data engineering roles."
+    },
+    {
+      "name": "WeAreDevelopers Jobs",
+      "url": "https://www.wearedevelopers.com/en/jobs",
+      "notes": "Software engineering roles."
+    },
+    {
+      "name": "Berlin Startup Jobs",
+      "url": "https://berlinstartupjobs.com",
+      "notes": "Startup tech roles, often remote/hybrid."
+    },
+    {
+      "name": "JOIN",
+      "url": "https://join.com",
+      "notes": "German and EU startup/company roles."
+    },
+    {
+      "name": "Wellfound",
+      "url": "https://wellfound.com/jobs",
+      "notes": "Startup roles, filter Germany or remote Europe."
+    },
+    {
+      "name": "RemoteOK",
+      "url": "https://remoteok.com",
+      "notes": "Remote roles; verify Europe/Germany eligibility."
+    },
+    {
+      "name": "Otta / Welcome to the Jungle",
+      "url": "https://www.welcometothejungle.com",
+      "notes": "Tech/company roles; use Germany and remote filters."
+    },
+    {
+      "name": "SAP Germany Careers",
+      "url": "https://jobs.sap.com",
+      "notes": "SAP careers; search Germany software, data, AI, cloud and platform roles."
+    }
+  ],
+  "saudi_arabia": [
+    {
+      "name": "LinkedIn Saudi Arabia",
+      "url": "https://www.linkedin.com/jobs",
+      "notes": "Runnable local search source. Filters LinkedIn guest job search by Saudi Arabia."
+    },
+    {
+      "name": "Indeed Saudi Arabia",
+      "url": "https://www.indeed.com/worldwide",
+      "notes": "Use cautiously; verify direct employer/apply pages for Saudi Arabia."
+    },
+    {
+      "name": "Bayt Saudi Arabia",
+      "url": "https://www.bayt.com",
+      "notes": "Middle East job board; search technology, software, data, AI and BI roles in Saudi Arabia."
+    },
+    {
+      "name": "GulfTalent Saudi Arabia",
+      "url": "https://www.gulftalent.com",
+      "notes": "GCC job board; verify location, visa, work mode and direct apply links for Saudi Arabia."
+    },
+    {
+      "name": "Naukrigulf Saudi Arabia",
+      "url": "https://www.naukrigulf.com",
+      "notes": "Gulf-region roles; filter by Saudi Arabia and technology/data keywords."
+    },
+    {
+      "name": "stc Saudi Arabia Careers",
+      "url": "https://www.stc.com.sa/content/stc/sa/en/about-stc/careers.html",
+      "notes": "stc Saudi career page; search software, data, AI, cloud and telecom technology roles."
+    },
+    {
+      "name": "SDAIA Careers",
+      "url": "https://sdaia.gov.sa",
+      "notes": "Saudi Data and AI Authority public site; search official data, AI and digital roles."
+    }
+  ],
+  "qatar": [
+    {
+      "name": "LinkedIn Qatar",
+      "url": "https://www.linkedin.com/jobs",
+      "notes": "Runnable local search source. Filters LinkedIn guest job search by Qatar."
+    },
+    {
+      "name": "Indeed Qatar",
+      "url": "https://www.indeed.com/worldwide",
+      "notes": "Use cautiously; verify direct employer/apply pages for Qatar."
+    },
+    {
+      "name": "Bayt Qatar",
+      "url": "https://www.bayt.com",
+      "notes": "Middle East job board; search technology, software, data, AI and BI roles in Qatar."
+    },
+    {
+      "name": "GulfTalent Qatar",
+      "url": "https://www.gulftalent.com",
+      "notes": "GCC job board; verify location, visa, work mode and direct apply links for Qatar."
+    },
+    {
+      "name": "Naukrigulf Qatar",
+      "url": "https://www.naukrigulf.com",
+      "notes": "Gulf-region roles; filter by Qatar and technology/data keywords."
+    },
+    {
+      "name": "QNB Careers Qatar",
+      "url": "https://www.qnb.com/sites/qnb/qnbglobal/page/en/encareers.html",
+      "notes": "QNB careers page; search Qatar software, data, analytics, BI and banking technology roles."
+    },
+    {
+      "name": "Qatar Airways Careers",
+      "url": "https://careers.qatarairways.com",
+      "notes": "Qatar Airways careers page; search Qatar technology, software, data, cloud and analytics roles."
+    }
+  ],
+  "oman": [
+    {
+      "name": "LinkedIn Oman",
+      "url": "https://www.linkedin.com/jobs",
+      "notes": "Runnable local search source. Filters LinkedIn guest job search by Oman."
+    },
+    {
+      "name": "Indeed Oman",
+      "url": "https://www.indeed.com/worldwide",
+      "notes": "Use cautiously; verify direct employer/apply pages for Oman."
+    },
+    {
+      "name": "Bayt Oman",
+      "url": "https://www.bayt.com",
+      "notes": "Middle East job board; search technology, software, data, AI and BI roles in Oman."
+    },
+    {
+      "name": "GulfTalent Oman",
+      "url": "https://www.gulftalent.com",
+      "notes": "GCC job board; verify location, visa, work mode and direct apply links for Oman."
+    },
+    {
+      "name": "Naukrigulf Oman",
+      "url": "https://www.naukrigulf.com",
+      "notes": "Gulf-region roles; filter by Oman and technology/data keywords."
+    },
+    {
+      "name": "Omantel Careers",
+      "url": "https://www.omantel.om",
+      "notes": "Omantel public/careers source; search Oman technology, software, data and telecom roles."
+    },
+    {
+      "name": "Oman Ministry of Labour Job Portal",
+      "url": "https://www.mol.gov.om",
+      "notes": "Official Oman labour/public jobs source; search digital, data, AI and software roles."
+    }
+  ],
+  "bahrain": [
+    {
+      "name": "LinkedIn Bahrain",
+      "url": "https://www.linkedin.com/jobs",
+      "notes": "Runnable local search source. Filters LinkedIn guest job search by Bahrain."
+    },
+    {
+      "name": "Indeed Bahrain",
+      "url": "https://www.indeed.com/worldwide",
+      "notes": "Use cautiously; verify direct employer/apply pages for Bahrain."
+    },
+    {
+      "name": "Bayt Bahrain",
+      "url": "https://www.bayt.com",
+      "notes": "Middle East job board; search technology, software, data, AI and BI roles in Bahrain."
+    },
+    {
+      "name": "GulfTalent Bahrain",
+      "url": "https://www.gulftalent.com",
+      "notes": "GCC job board; verify location, visa, work mode and direct apply links for Bahrain."
+    },
+    {
+      "name": "Naukrigulf Bahrain",
+      "url": "https://www.naukrigulf.com",
+      "notes": "Gulf-region roles; filter by Bahrain and technology/data keywords."
+    },
+    {
+      "name": "Batelco Careers Bahrain",
+      "url": "https://www.batelco.com",
+      "notes": "Batelco public/careers source; search Bahrain technology, telecom, software and data roles."
+    },
+    {
+      "name": "Bahrain FinTech Bay Careers",
+      "url": "https://www.bahrainfintechbay.com",
+      "notes": "Bahrain fintech ecosystem source; search fintech, data, software and AI roles."
+    }
+  ],
+  "kuwait": [
+    {
+      "name": "LinkedIn Kuwait",
+      "url": "https://www.linkedin.com/jobs",
+      "notes": "Runnable local search source. Filters LinkedIn guest job search by Kuwait."
+    },
+    {
+      "name": "Indeed Kuwait",
+      "url": "https://www.indeed.com/worldwide",
+      "notes": "Use cautiously; verify direct employer/apply pages for Kuwait."
+    },
+    {
+      "name": "Bayt Kuwait",
+      "url": "https://www.bayt.com",
+      "notes": "Middle East job board; search technology, software, data, AI and BI roles in Kuwait."
+    },
+    {
+      "name": "GulfTalent Kuwait",
+      "url": "https://www.gulftalent.com",
+      "notes": "GCC job board; verify location, visa, work mode and direct apply links for Kuwait."
+    },
+    {
+      "name": "Naukrigulf Kuwait",
+      "url": "https://www.naukrigulf.com",
+      "notes": "Gulf-region roles; filter by Kuwait and technology/data keywords."
+    },
+    {
+      "name": "Zain Kuwait Careers",
+      "url": "https://www.kw.zain.com",
+      "notes": "Zain Kuwait public/careers source; search telecom, software, data, AI and cloud roles."
+    },
+    {
+      "name": "NBK Careers Kuwait",
+      "url": "https://www.nbk.com",
+      "notes": "National Bank of Kuwait public/careers source; search banking technology, software, data and analytics roles."
+    }
+  ],
+  "united_arab_emirates": [
+    {
+      "name": "LinkedIn United Arab Emirates",
+      "url": "https://www.linkedin.com/jobs",
+      "notes": "Runnable local search source. Filters LinkedIn guest job search by United Arab Emirates."
+    },
+    {
+      "name": "Indeed United Arab Emirates",
+      "url": "https://www.indeed.com/worldwide",
+      "notes": "Use cautiously; verify direct employer/apply pages for United Arab Emirates."
+    },
+    {
+      "name": "Bayt United Arab Emirates",
+      "url": "https://www.bayt.com",
+      "notes": "Middle East job board; search technology, software, data, AI and BI roles in United Arab Emirates."
+    },
+    {
+      "name": "GulfTalent United Arab Emirates",
+      "url": "https://www.gulftalent.com",
+      "notes": "GCC job board; verify location, visa, work mode and direct apply links for United Arab Emirates."
+    },
+    {
+      "name": "Naukrigulf United Arab Emirates",
+      "url": "https://www.naukrigulf.com",
+      "notes": "Gulf-region roles; filter by United Arab Emirates and technology/data keywords."
+    },
+    {
+      "name": "Emirates Group Careers",
+      "url": "https://www.emiratesgroupcareers.com",
+      "notes": "Emirates Group careers page; search UAE software, data, AI, analytics and technology roles."
+    },
+    {
+      "name": "Dubai Careers",
+      "url": "https://dubaicareers.ae",
+      "notes": "Dubai Government careers portal; search UAE public-sector digital, software, data and AI roles."
+    }
+  ]
+}

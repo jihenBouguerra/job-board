@@ -1,0 +1,140 @@
+{
+  "countries": {
+    "luxembourg": true,
+    "germany": false,
+    "saudi_arabia": false,
+    "qatar": false,
+    "oman": false,
+    "bahrain": false,
+    "kuwait": false,
+    "united_arab_emirates": false
+  },
+  "workModes": {
+    "remote": true,
+    "hybrid": true,
+    "onsite": true
+  },
+  "roleKeywords": [
+    "data engineer",
+    "senior data engineer",
+    "data platform engineer",
+    "cloud data engineer",
+    "analytics engineer",
+    "BI engineer",
+    "BI developer",
+    "business intelligence engineer",
+    "AI engineer",
+    "machine learning engineer",
+    "backend engineer",
+    "software engineer",
+    "full stack engineer",
+    "data infrastructure engineer",
+    "MLOps engineer"
+  ],
+  "enabledSources": {
+    "luxembourg": [
+      "LinkedIn Luxembourg",
+      "jobs.lu",
+      "Moovijob Luxembourg",
+      "ICTjob Luxembourg",
+      "Indeed Luxembourg",
+      "Monster Luxembourg",
+      "Jobfinder Luxembourg",
+      "jobsinluxembourg.eu",
+      "ADEM JobBoard",
+      "Silicon Luxembourg Jobs",
+      "LuxProvide Careers",
+      "POST Luxembourg Careers",
+      "University of Luxembourg Careers",
+      "LIST Careers",
+      "Luxembourg Institute of Health Careers",
+      "EIB Careers",
+      "Amazon Luxembourg Jobs",
+      "PwC Luxembourg Careers"
+    ],
+    "germany": [
+      "LinkedIn Germany",
+      "StepStone Germany",
+      "Indeed Germany",
+      "XING Jobs",
+      "Arbeitsagentur Jobbörse",
+      "Honeypot",
+      "GermanTechJobs",
+      "WeAreDevelopers Jobs",
+      "Berlin Startup Jobs",
+      "JOIN",
+      "Wellfound",
+      "RemoteOK",
+      "Otta / Welcome to the Jungle",
+      "SAP Germany Careers"
+    ],
+    "saudi_arabia": [
+      "LinkedIn Saudi Arabia",
+      "Indeed Saudi Arabia",
+      "Bayt Saudi Arabia",
+      "GulfTalent Saudi Arabia",
+      "Naukrigulf Saudi Arabia",
+      "stc Saudi Arabia Careers",
+      "SDAIA Careers"
+    ],
+    "qatar": [
+      "LinkedIn Qatar",
+      "Indeed Qatar",
+      "Bayt Qatar",
+      "GulfTalent Qatar",
+      "Naukrigulf Qatar",
+      "QNB Careers Qatar",
+      "Qatar Airways Careers"
+    ],
+    "oman": [
+      "LinkedIn Oman",
+      "Indeed Oman",
+      "Bayt Oman",
+      "GulfTalent Oman",
+      "Naukrigulf Oman",
+      "Omantel Careers",
+      "Oman Ministry of Labour Job Portal"
+    ],
+    "bahrain": [
+      "LinkedIn Bahrain",
+      "Indeed Bahrain",
+      "Bayt Bahrain",
+      "GulfTalent Bahrain",
+      "Naukrigulf Bahrain",
+      "Batelco Careers Bahrain",
+      "Bahrain FinTech Bay Careers"
+    ],
+    "kuwait": [
+      "LinkedIn Kuwait",
+      "Indeed Kuwait",
+      "Bayt Kuwait",
+      "GulfTalent Kuwait",
+      "Naukrigulf Kuwait",
+      "Zain Kuwait Careers",
+      "NBK Careers Kuwait"
+    ],
+    "united_arab_emirates": [
+      "LinkedIn United Arab Emirates",
+      "Indeed United Arab Emirates",
+      "Bayt United Arab Emirates",
+      "GulfTalent United Arab Emirates",
+      "Naukrigulf United Arab Emirates",
+      "Emirates Group Careers",
+      "Dubai Careers"
+    ]
+  },
+  "maxJobsPerRun": null,
+  "minimumFitScore": 0,
+  "maxPostingAgeDays": 30,
+  "strictLinkCheck": true,
+  "dedupe": {
+    "byApplyUrl": true,
+    "byNameAndCompany": true,
+    "byNearDuplicate": true
+  },
+  "schedule": {
+    "enabled": false,
+    "hour": 8,
+    "minute": 0
+  }
+}
