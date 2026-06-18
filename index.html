@@ -312,6 +312,54 @@
       box-shadow:0 4px 20px rgba(0,0,0,.4);
     }
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* ── Mobile card grid ── */
+    .card-grid{display:none;flex-direction:column;gap:8px;padding:8px 12px 72px}
+    .job-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:14px;cursor:pointer;transition:border-color .12s,background .12s;
+    }
+    .job-card:active{border-color:var(--border-2);background:var(--surface-2)}
+    .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px}
+    .card-title{font-size:.92rem;font-weight:700;line-height:1.3;color:var(--text);flex:1}
+    .card-date{font-size:.72rem;color:var(--text-faint);white-space:nowrap;flex-shrink:0;margin-top:2px}
+    .card-sub{font-size:.78rem;color:var(--text-dim);margin-bottom:9px}
+    .card-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+    .card-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .card-tech{font-size:.72rem;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+
+    /* ── Mobile overrides ── */
+    @media(max-width:640px){
+      /* Toolbar */
+      .toolbar-inner{padding:10px 14px;gap:8px}
+      .run-btn .run-label{display:none}
+
+      /* Filter bar stacks vertically */
+      .filterbar{flex-direction:column;padding:8px 14px 10px;gap:7px}
+      .search-wrap{max-width:100%;width:100%}
+      .f-selects{display:flex;gap:6px;width:100%}
+      select.f-sel{flex:1;min-width:0;font-size:.78rem;padding:0 4px}
+      .f-divider{display:none}
+      .date-chips{
+        overflow-x:auto;-webkit-overflow-scrolling:touch;
+        scrollbar-width:none;padding-bottom:2px;
+      }
+      .date-chips::-webkit-scrollbar{display:none}
+      .clear-filters{align-self:flex-end}
+
+      /* Status counts */
+      #statusCounts{padding:6px 14px}
+      #runBanner{padding:7px 14px}
+
+      /* Hide table, show cards */
+      .table-wrap{display:none}
+      .card-grid{display:flex}
+
+      /* Full-width panel on mobile */
+      #panel{width:100vw;right:-100vw}
+      #panel.open{right:0}
+      .panel-actions{grid-template-columns:1fr 1fr}
+    }
   </style>
 </head>
 <body>
@@ -324,7 +372,7 @@
       <span class="job-count" id="jobCount">0 jobs</span>
     </div>
     <div class="toolbar-right">
-      <button class="run-btn" id="runBtn">▶ Run search</button>
+      <button class="run-btn" id="runBtn">▶ <span class="run-label">Run search</span></button>
       <a href="/settings" class="icon-btn" title="Settings">⚙</a>
     </div>
   </div>
@@ -338,27 +386,29 @@
 
     <div class="f-divider"></div>
 
-    <!-- Country -->
-    <select class="f-sel" id="countrySelect">
-      <option value="">🌍 All countries</option>
-    </select>
+    <div class="f-selects">
+      <!-- Country -->
+      <select class="f-sel" id="countrySelect">
+        <option value="">🌍 All countries</option>
+      </select>
 
-    <!-- Work mode -->
-    <select class="f-sel" id="modeSelect">
-      <option value="">⊙ All modes</option>
-      <option value="remote">🌐 Remote</option>
-      <option value="hybrid">◑ Hybrid</option>
-      <option value="onsite">🏢 On-site</option>
-    </select>
+      <!-- Work mode -->
+      <select class="f-sel" id="modeSelect">
+        <option value="">⊙ All modes</option>
+        <option value="remote">🌐 Remote</option>
+        <option value="hybrid">◑ Hybrid</option>
+        <option value="onsite">🏢 On-site</option>
+      </select>
 
-    <!-- Status -->
-    <select class="f-sel" id="statusSelect">
-      <option value="">◉ All statuses</option>
-      <option value="new">● New</option>
-      <option value="saved">💾 Saved</option>
-      <option value="applied">✓ Applied</option>
-      <option value="rejected">✕ Rejected</option>
-    </select>
+      <!-- Status -->
+      <select class="f-sel" id="statusSelect">
+        <option value="">◉ All statuses</option>
+        <option value="new">● New</option>
+        <option value="saved">💾 Saved</option>
+        <option value="applied">✓ Applied</option>
+        <option value="rejected">✕ Rejected</option>
+      </select>
+    </div>
 
     <div class="f-divider"></div>
 
@@ -408,6 +458,9 @@
     <p>No jobs match your filters.<br>Adjust filters or run a search.</p>
   </div>
 </div>
+
+<!-- ── Mobile card grid ── -->
+<div id="cardGrid" class="card-grid"></div>
 
 <!-- ── Detail side panel ── -->
 <div id="backdrop"></div>
@@ -597,6 +650,35 @@
         </td>
       </tr>`;
     }).join('');
+    renderCards();
+  }
+
+  function renderCards() {
+    const cg = $('cardGrid');
+    const rows = sorted();
+    if (!rows.length) { cg.innerHTML = ''; return; }
+    cg.innerHTML = rows.map(j => {
+      const sm = STATUS_META[j.status] || STATUS_META.new;
+      const mm = MODE_META[j.work_mode] || { label: j.work_mode||'—', cls:'chip-onsite' };
+      const pd = j.posted_at ? fmtDate(j.posted_at) : '';
+      const tech = compactTech(j.keywords);
+      return `<div class="job-card" data-id="${esc(j.id)}">
+        <div class="card-top">
+          <div class="card-title">${esc(j.title)}</div>
+          ${pd ? `<div class="card-date">${esc(pd)}</div>` : ''}
+        </div>
+        <div class="card-sub">${esc(j.company||'—')}${j.country?' · '+esc(j.country):''}</div>
+        <div class="card-chips">
+          <span class="sb ${sm.cls}" data-status-btn="${esc(j.id)}">${sm.label}</span>
+          <span class="chip ${mm.cls}">${mm.label}</span>
+        </div>
+        <div class="card-bottom">
+          <div class="card-tech">${esc(tech)}</div>
+          <a class="apply-link" href="${esc(j.url)}" target="_blank" rel="noreferrer"
+             title="Open listing" onclick="event.stopPropagation()">↗</a>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   // ── inline status dropdown ─────────────────────────────────────────────────
@@ -781,8 +863,8 @@
     const actBtn = e.target.closest('[data-action="status"]');
     if (actBtn) { setStatus(actBtn.dataset.id, actBtn.dataset.status); return; }
 
-    // Table row → open panel
-    const row = e.target.closest('tbody tr');
+    // Table row or mobile card → open panel
+    const row = e.target.closest('tbody tr, .job-card');
     if (row && !e.target.closest('a')) { openPanel(row.dataset.id); return; }
 
     // Panel / backdrop close
@@ -855,7 +937,7 @@
       if (!run.active) {
         stopPoll();
         $('runBanner').style.display='none';
-        $('runBtn').textContent='▶ Run search';
+        $('runBtn').innerHTML='▶ <span class="run-label">Run search</span>';
         $('runBtn').disabled=false;
         if (run.error) toast('Error: '+run.error);
         else toast('Search complete — reloading…');
@@ -866,7 +948,7 @@
 
   $('runBtn').addEventListener('click', async () => {
     const cr=++activeClientRun;
-    $('runBtn').textContent='…'; $('runBtn').disabled=true;
+    $('runBtn').innerHTML='…'; $('runBtn').disabled=true;
     $('runBanner').style.display='flex'; $('runBannerText').textContent='Starting…';
     try {
       await fetch('/api/prepare-run',{method:'POST'});
@@ -875,7 +957,7 @@
       runPollTimer=setInterval(()=>pollRun(cr),1500);
     } catch {
       $('runBanner').style.display='none';
-      $('runBtn').textContent='▶ Run search'; $('runBtn').disabled=false;
+      $('runBtn').innerHTML='▶ <span class="run-label">Run search</span>'; $('runBtn').disabled=false;
       toast('Could not start run');
     }
   });
@@ -892,7 +974,7 @@
       const res=await fetch('/api/run-status'); const data=await res.json();
       if(data.run?.active){
         $('runBanner').style.display='flex';
-        $('runBtn').textContent='…'; $('runBtn').disabled=true;
+        $('runBtn').innerHTML='…'; $('runBtn').disabled=true;
         runPollTimer=setInterval(()=>pollRun(activeClientRun),1500);
       }
     } catch {}

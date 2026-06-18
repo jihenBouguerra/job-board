@@ -15,6 +15,7 @@ A personal job aggregator that scrapes multiple job boards daily, stores results
 - **Progressive results** — jobs appear as each source finishes, no waiting for the full run
 - **Daily scheduler** — configure a run time; the server fires it automatically each morning
 - **Status counts bar** — live counts of All · New · Saved · Applied · Rejected
+- **Mobile-friendly** — card layout on phone (≤ 640 px), full-width side panel, touch-optimised filters
 
 ## Requirements
 

@@ -482,17 +482,6 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "POST" && req.url === "/api/save-screenshot") {
-      const body = await collectBody(req);
-      const { name, data } = JSON.parse(body);
-      const dir = path.join(root, "screenshots");
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-      const buf = Buffer.from(data.replace(/^data:image\/\w+;base64,/, ""), "base64");
-      fs.writeFileSync(path.join(dir, name), buf);
-      send(res, 200, JSON.stringify({ ok: true, name }));
-      return;
-    }
-
     send(res, 404, JSON.stringify({ error: "Not found" }));
   } catch (error) {
     send(res, 500, JSON.stringify({ error: error.message }));
