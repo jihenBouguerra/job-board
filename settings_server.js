@@ -507,7 +507,7 @@ const server = http.createServer(async (req, res) => {
 
 const port = Number(process.env.PORT || 8765);
 setupSchedule();
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Job Board:  http://127.0.0.1:${port}`);
-  console.log(`Settings:   http://127.0.0.1:${port}/settings`);
+server.listen(port, "0.0.0.0", () => {
+  console.log(`Job Board:  http://0.0.0.0:${port}`);
+  console.log(`Settings:   http://0.0.0.0:${port}/settings`);
 });
