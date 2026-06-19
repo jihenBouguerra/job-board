@@ -10,3 +10,5 @@ __pycache__/
 *.json.backup
 notion_jobs_export_*.json
 notion_jobs_backup_*.json
+stock-app/stocks.db
+stock-app/node_modules/

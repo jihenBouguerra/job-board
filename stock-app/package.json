@@ -2,6 +2,7 @@
   "name": "stock-analyst-app",
   "version": "1.0.0",
   "description": "تطبيق تحليل الأسهم",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

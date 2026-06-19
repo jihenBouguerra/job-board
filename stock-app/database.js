@@ -1,7 +1,9 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+import Database from 'better-sqlite3';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const db = new Database(path.join(__dirname, 'stocks.db'));
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const db = new Database(join(__dirname, 'stocks.db'));
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS stocks (
@@ -12,49 +14,33 @@ db.exec(`
     last_updated TEXT NOT NULL,
     notes TEXT DEFAULT ''
   );
-
-  CREATE TABLE IF NOT EXISTS watchlist (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    symbol TEXT NOT NULL,
-    added_at TEXT NOT NULL,
-    UNIQUE(symbol)
-  );
 `);
 
-module.exports = {
-  saveStock(symbol, name, data) {
-    const stmt = db.prepare(`
-      INSERT INTO stocks (symbol, name, data, last_updated)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(symbol) DO UPDATE SET
-        name = excluded.name,
-        data = excluded.data,
-        last_updated = excluded.last_updated
-    `);
-    stmt.run(symbol.toUpperCase(), name, JSON.stringify(data), new Date().toISOString());
-  },
+export function saveStock(symbol, name, data) {
+  db.prepare(`
+    INSERT INTO stocks (symbol, name, data, last_updated)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(symbol) DO UPDATE SET
+      name = excluded.name,
+      data = excluded.data,
+      last_updated = excluded.last_updated
+  `).run(symbol.toUpperCase(), name, JSON.stringify(data), new Date().toISOString());
+}
 
-  getStock(symbol) {
-    const row = db.prepare('SELECT * FROM stocks WHERE symbol = ?').get(symbol.toUpperCase());
-    if (!row) return null;
-    return { ...row, data: JSON.parse(row.data) };
-  },
+export function getStock(symbol) {
+  const row = db.prepare('SELECT * FROM stocks WHERE symbol = ?').get(symbol.toUpperCase());
+  if (!row) return null;
+  return { ...row, data: JSON.parse(row.data) };
+}
 
-  getAllStocks() {
-    const rows = db.prepare('SELECT id, symbol, name, last_updated, notes FROM stocks ORDER BY last_updated DESC').all();
-    return rows;
-  },
+export function getAllStocks() {
+  return db.prepare('SELECT id, symbol, name, last_updated, notes FROM stocks ORDER BY last_updated DESC').all();
+}
 
-  deleteStock(symbol) {
-    db.prepare('DELETE FROM stocks WHERE symbol = ?').run(symbol.toUpperCase());
-  },
+export function deleteStock(symbol) {
+  db.prepare('DELETE FROM stocks WHERE symbol = ?').run(symbol.toUpperCase());
+}
 
-  updateNotes(symbol, notes) {
-    db.prepare('UPDATE stocks SET notes = ? WHERE symbol = ?').run(notes, symbol.toUpperCase());
-  },
-
-  isStored(symbol) {
-    const row = db.prepare('SELECT symbol FROM stocks WHERE symbol = ?').get(symbol.toUpperCase());
-    return !!row;
-  }
-};
+export function updateNotes(symbol, notes) {
+  db.prepare('UPDATE stocks SET notes = ? WHERE symbol = ?').run(notes, symbol.toUpperCase());
+}
