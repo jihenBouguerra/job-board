@@ -50,6 +50,7 @@ async function analyzeStock(symbol, forceRefresh = false) {
       body: JSON.stringify({ symbol, forceRefresh }),
     });
     const json = await res.json();
+    if (res.status === 401) { $('loginGate').hidden = false; return null; }
     if (!res.ok) throw new Error(json.error || 'خطأ غير معروف');
     return json;
   } catch (e) {
@@ -898,6 +899,48 @@ const style = document.createElement('style');
 style.textContent = `.subsection-label{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;display:block}`;
 document.head.appendChild(style);
 
+/* ─── AUTH ──────────────────────────────────────────────────────────────── */
+async function checkAuth() {
+  const res = await fetch('/api/auth/check');
+  const { authenticated } = await res.json();
+  if (authenticated) {
+    $('loginGate').hidden = true;
+    showState('empty');
+    loadSavedList();
+  } else {
+    $('loginGate').hidden = false;
+  }
+}
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const password = $('passwordInput').value;
+  const err = $('loginError');
+  err.hidden = true;
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+  if (res.ok) {
+    $('loginGate').hidden = true;
+    showState('empty');
+    loadSavedList();
+  } else {
+    err.textContent = 'كلمة المرور غير صحيحة';
+    err.hidden = false;
+    $('passwordInput').value = '';
+    $('passwordInput').focus();
+  }
+});
+
+$('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  $('loginGate').hidden = false;
+  $('passwordInput').value = '';
+  showState('empty');
+  currentSymbol = null;
+});
+
 /* ─── INIT ──────────────────────────────────────────────────────────────── */
-showState('empty');
-loadSavedList();
+checkAuth();

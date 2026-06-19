@@ -1,12 +1,51 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { randomUUID } from 'crypto';
 import { saveStock, getStock, getAllStocks, deleteStock, updateNotes } from './database.js';
 import { getEDGARData } from './edgar.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+const PASSWORD = process.env.APP_PASSWORD || 'bam2024';
+const SESSIONS = new Set();
+
+function parseCookies(req) {
+  const header = req.headers.cookie || '';
+  return Object.fromEntries(header.split(';').map(c => c.trim().split('=').map(decodeURIComponent)));
+}
+
+function requireAuth(req, res, next) {
+  const { session } = parseCookies(req);
+  if (session && SESSIONS.has(session)) return next();
+  res.status(401).json({ error: 'غير مصرح' });
+}
+
+app.post('/api/auth/login', (req, res) => {
+  if (req.body.password !== PASSWORD) {
+    return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
+  }
+  const token = randomUUID();
+  SESSIONS.add(token);
+  res.setHeader('Set-Cookie', `session=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Strict`);
+  res.json({ ok: true });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  const { session } = parseCookies(req);
+  if (session) SESSIONS.delete(session);
+  res.setHeader('Set-Cookie', 'session=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict');
+  res.json({ ok: true });
+});
+
+app.get('/api/auth/check', (req, res) => {
+  const { session } = parseCookies(req);
+  res.json({ authenticated: !!(session && SESSIONS.has(session)) });
+});
+
 app.use(express.static(join(__dirname, 'public')));
 
 // ─── Yahoo Finance ──────────────────────────────────────────────────────────
@@ -83,7 +122,7 @@ async function fetchYahoo(symbol) {
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
 
-app.post('/api/stock/analyze', async (req, res) => {
+app.post('/api/stock/analyze', requireAuth, async (req, res) => {
   const { symbol, forceRefresh = false } = req.body;
   if (!symbol) return res.status(400).json({ error: 'رمز السهم مطلوب' });
 
@@ -119,14 +158,14 @@ app.post('/api/stock/analyze', async (req, res) => {
   res.json({ stock: getStock(sym), fromCache: false });
 });
 
-app.get('/api/stocks',        (_q, r) => r.json({ stocks: getAllStocks() }));
-app.get('/api/stock/:symbol', (req, res) => {
+app.get('/api/stocks',        requireAuth, (_q, r) => r.json({ stocks: getAllStocks() }));
+app.get('/api/stock/:symbol', requireAuth, (req, res) => {
   const s = getStock(req.params.symbol);
   if (!s) return res.status(404).json({ error: 'السهم غير موجود' });
   res.json({ stock: s });
 });
-app.delete('/api/stock/:symbol', (req, res) => { deleteStock(req.params.symbol); res.json({ success: true }); });
-app.put('/api/stock/:symbol/notes', (req, res) => { updateNotes(req.params.symbol, req.body.notes || ''); res.json({ success: true }); });
+app.delete('/api/stock/:symbol', requireAuth, (req, res) => { deleteStock(req.params.symbol); res.json({ success: true }); });
+app.put('/api/stock/:symbol/notes', requireAuth, (req, res) => { updateNotes(req.params.symbol, req.body.notes || ''); res.json({ success: true }); });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Stock Analyst → http://localhost:${PORT}`));

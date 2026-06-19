@@ -674,3 +674,58 @@ body {
 .text-red { color: var(--red); }
 .text-yellow { color: var(--yellow); }
 .text-muted { color: var(--muted); }
+
+/* ===== LOGIN GATE ===== */
+.login-gate {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+}
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+.login-logo { font-size: 48px; line-height: 1; }
+.login-card h2 { font-size: 22px; font-weight: 900; }
+.login-sub { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+#loginForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#loginForm input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  text-align: center;
+  letter-spacing: 4px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+#loginForm input:focus { border-color: var(--accent); }
+.login-btn { width: 100%; padding: 14px; font-size: 16px; font-weight: 700; }
+.login-error { color: var(--red); font-size: 13px; margin-top: 4px; }
+
+/* Logout button */
+.logout-btn { font-size: 18px; color: var(--muted); }

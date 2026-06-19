@@ -9,6 +9,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- ===== LOGIN GATE ===== -->
+  <div id="loginGate" class="login-gate" hidden>
+    <div class="login-card">
+      <div class="login-logo">📈</div>
+      <h2>محلل الأسهم</h2>
+      <p class="login-sub">منهجية B.A.M الاحترافية</p>
+      <form id="loginForm" autocomplete="off">
+        <input
+          id="passwordInput"
+          type="password"
+          placeholder="كلمة المرور"
+          autocomplete="current-password"
+          autofocus
+        />
+        <button type="submit" class="btn-primary login-btn">🔐 دخول</button>
+        <p class="login-error" id="loginError" hidden></p>
+      </form>
+    </div>
+  </div>
+
   <div class="app">
 
     <!-- ===== SIDEBAR ===== -->
@@ -37,6 +58,7 @@
           </div>
         </div>
         <span class="badge">PRO</span>
+        <button class="icon-btn logout-btn" id="logoutBtn" title="تسجيل الخروج">⏏</button>
       </header>
 
       <!-- Search -->
