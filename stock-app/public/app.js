@@ -119,26 +119,27 @@ async function loadAndShow(symbol, forceRefresh = false) {
 
 /* ═══ RENDER ═════════════════════════════════════════════════════════════ */
 function renderAnalysis({ stock, fromCache, stale, isDemo }) {
-  const d  = stock.data;
-  const q  = d.quote   || {};
-  const s  = d.summary || {};
-  const ap = s.assetProfile  || {};
-  const fd = s.financialData || {};
-  const ks = s.defaultKeyStatistics || {};
-  const sd = s.summaryDetail || {};
-  const pr = s.price || {};
-  const iq = s.incomeStatementHistoryQuarterly?.incomeStatementHistory || [];
-  const cq = s.cashflowStatementHistoryQuarterly?.cashflowStatements   || [];
-  const bq = s.balanceSheetHistoryQuarterly?.balanceSheetStatements    || [];
-  const eh = s.earningsHistory?.history || [];
-  const rt = s.recommendationTrend?.trend || [];
-  const ug = s.upgradeDowngradeHistory?.history || [];
-  const mh = s.majorHoldersBreakdown || {};
-  const io = s.institutionOwnership?.ownershipList || [];
-  const ih = s.insiderHolders?.holders || [];
-  const it = s.insiderTransactions?.transactions || [];
-  const ce = s.calendarEvents?.earnings || {};
-  const et = s.earningsTrend?.trend || [];
+  const d   = stock.data;
+  const q   = d.quote   || {};
+  const s   = d.summary || {};
+  const eg  = d.edgar   || null;   // SEC EDGAR — may be null for non-US or unavailable
+  const ap  = s.assetProfile  || {};
+  const fd  = s.financialData || {};
+  const ks  = s.defaultKeyStatistics || {};
+  const sd  = s.summaryDetail || {};
+  const pr  = s.price || {};
+  const iq  = s.incomeStatementHistoryQuarterly?.incomeStatementHistory || [];
+  const cq  = s.cashflowStatementHistoryQuarterly?.cashflowStatements   || [];
+  const bq  = s.balanceSheetHistoryQuarterly?.balanceSheetStatements    || [];
+  const eh  = s.earningsHistory?.history || [];
+  const rt  = s.recommendationTrend?.trend || [];
+  const ug  = s.upgradeDowngradeHistory?.history || [];
+  const mh  = s.majorHoldersBreakdown || {};
+  const io  = s.institutionOwnership?.ownershipList || [];
+  const ih  = s.insiderHolders?.holders || [];
+  const it  = s.insiderTransactions?.transactions || [];
+  const ce  = s.calendarEvents?.earnings || {};
+  const et  = s.earningsTrend?.trend || [];
 
   const price    = q.regularMarketPrice ?? raw(pr.regularMarketPrice);
   const change   = q.regularMarketChange;
@@ -156,6 +157,11 @@ function renderAnalysis({ stock, fromCache, stale, isDemo }) {
     cacheBadge = `<div class="cache-badge">⏱ محفوظة · منذ ${h} ساعة${h === 0 ? ' (حديثة)' : ''}</div>`;
   }
 
+  /* --- EDGAR BADGE --- */
+  const edgarBadge = eg
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.25);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700">🏛️ SEC EDGAR</span>`
+    : '';
+
   /* --- HERO CARD --- */
   $('stockHero').innerHTML = `
     <div class="hero-top">
@@ -163,6 +169,7 @@ function renderAnalysis({ stock, fromCache, stale, isDemo }) {
         <h2>${stock.name || stock.symbol}</h2>
         <p>${stock.symbol} · ${na(ap.exchange || q.fullExchangeName)} · ${na(ap.sector || sd.sector)}</p>
         ${ap.website ? `<a href="${ap.website}" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent)">${ap.website}</a>` : ''}
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${edgarBadge}</div>
       </div>
       <div class="hero-price-block">
         <div class="hero-price">${price != null ? fmtUSD(price) : 'N/A'}</div>
@@ -188,14 +195,14 @@ function renderAnalysis({ stock, fromCache, stale, isDemo }) {
 
   /* --- 8 SECTIONS --- */
   $('sections').innerHTML = [
-    sec1(ap, q, fd, sd),
+    sec1(ap, q, fd, sd, eg),
     sec2(mh, io, ih, it),
-    sec3(iq, cq, bq),
-    sec4(fd, ks, sd, bq, cq),
+    sec3(iq, cq, bq, eg),
+    sec4(fd, ks, sd, bq, cq, eg),
     sec5(q, ks, ug, eh, ce, et),
     sec6(rt, fd, q),
     sec7(fd, ks, q, sd),
-    sec8(fd, ks, rt, q),
+    sec8(fd, ks, rt, q, eg),
   ].join('');
 
   addExpandListeners();
@@ -207,10 +214,15 @@ function heroStat(label, val, cls = '') {
 }
 
 /* ─── SEC 1: Business Model & Moat ─────────────────────────────────────── */
-function sec1(ap, q, fd, sd) {
+function sec1(ap, q, fd, sd, eg) {
   const mcap = q.marketCap;
   const mcapCat = mcap >= 200e9 ? 'Mega Cap (>200B)' : mcap >= 10e9 ? 'Large Cap (10-200B)' : mcap >= 2e9 ? 'Mid Cap (2-10B)' : mcap ? 'Small Cap (<2B)' : 'N/A';
   const desc = ap.longBusinessSummary || ap.description || 'وصف غير متاح';
+
+  // Prefer EDGAR TTM revenue if available (more official)
+  const revTTM = eg?.ttmRevenue ?? raw(fd.totalRevenue);
+  const fcf    = eg?.ttmFCF     ?? raw(fd.freeCashflow);
+  const rndTTM = eg?.ttmRnD;
 
   return `
   <div class="card">
@@ -222,11 +234,12 @@ function sec1(ap, q, fd, sd) {
       ${metric('Employees',         ap.fullTimeEmployees ? ap.fullTimeEmployees.toLocaleString() : null)}
       ${metric('Market Cap Cat.',   mcapCat)}
       ${metric('Market Cap',        `$${fmt(q.marketCap)}`)}
-      ${metric('Revenue (TTM)',     `$${fmt(raw(fd.totalRevenue))}`)}
-      ${metric('Gross Margin',      fmtPct(fd.grossMargins),      statusCls(fd.grossMargins, 0.4, 0.2))}
-      ${metric('Operating Margin',  fmtPct(fd.operatingMargins),  statusCls(fd.operatingMargins, 0.15, 0.05))}
-      ${metric('Net Profit Margin', fmtPct(fd.profitMargins),     statusCls(fd.profitMargins, 0.15, 0.03))}
-      ${metric('Free Cash Flow',    `$${fmt(raw(fd.freeCashflow))}`)}
+      ${metric('Revenue TTM',       `$${fmt(revTTM)}`, '', eg?.ttmRevenue ? '🏛️ SEC EDGAR' : '')}
+      ${metric('Gross Margin',      fmtPct(fd.grossMargins),     statusCls(fd.grossMargins, 0.4, 0.2))}
+      ${metric('Operating Margin',  fmtPct(fd.operatingMargins), statusCls(fd.operatingMargins, 0.15, 0.05))}
+      ${metric('Net Margin',        fmtPct(fd.profitMargins),    statusCls(fd.profitMargins, 0.15, 0.03))}
+      ${metric('Free Cash Flow',    `$${fmt(fcf)}`, statusCls(fcf, 1, 0), eg?.ttmFCF ? '🏛️ SEC EDGAR' : '')}
+      ${rndTTM ? metric('R&D Expense TTM', `$${fmt(rndTTM)}`, '', '🏛️ SEC EDGAR') : ''}
       ${metric('Current Ratio',     sd.currentRatio != null ? raw(sd.currentRatio).toFixed(2) : null, statusCls(raw(sd.currentRatio), 2, 1))}
     </div>
     <div class="collapsible">
@@ -287,68 +300,122 @@ function sec2(mh, io, ih, it) {
 }
 
 /* ─── SEC 3: Financial Reports ──────────────────────────────────────────── */
-function sec3(iq, cq, bq) {
-  const last3 = iq.slice(0, 3);
-  if (!last3.length) return `
-    <div class="card">
-      <h3 class="card-title"><span class="section-num">03</span> 📊 التقارير المالية الثلاثة الأخيرة</h3>
-      <p class="text-muted" style="font-size:13px">البيانات غير متاحة من Yahoo Finance</p>
-    </div>`;
+function sec3(iq, cq, bq, eg) {
+  /* Use SEC EDGAR quarterly data when available (official 10-Q filings) */
+  const useEdgar = eg?.quarterlyRevenue?.length >= 2;
+  const srcLabel = useEdgar
+    ? `<span style="font-size:11px;font-weight:700;color:#22c55e">🏛️ المصدر: SEC EDGAR (تقارير 10-Q الرسمية)</span>`
+    : `<span style="font-size:11px;color:var(--muted)">المصدر: Yahoo Finance</span>`;
 
-  const rows = last3.map((q, i) => {
-    const rev  = raw(q.totalRevenue);
-    const ni   = raw(q.netIncome);
-    const eps  = raw(q.dilutedEps ?? q.basicEps);
-    const date = q.endDate ? new Date(raw(q.endDate) * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
-    const prevRev = i < last3.length - 1 ? raw(last3[i+1].totalRevenue) : null;
-    const grw  = rev && prevRev ? ((rev - prevRev) / Math.abs(prevRev) * 100) : null;
-    const grwHtml = grw != null ? `<span class="${grw >= 0 ? 'text-green' : 'text-red'}" style="font-size:11px"> ${grw >= 0 ? '▲' : '▼'}${Math.abs(grw).toFixed(1)}%</span>` : '';
-    const niCls = ni == null ? '' : ni >= 0 ? 'text-green' : 'text-red';
-    return `<tr><td>${date}</td><td>$${fmt(rev)}${grwHtml}</td><td class="${niCls}">$${fmt(ni)}</td><td>${eps != null ? '$' + eps.toFixed(2) : 'N/A'}</td></tr>`;
-  }).join('');
+  let incomeRows = '';
+  let revTrend = '';
 
-  /* Cash flow table */
-  const cfRows = cq.slice(0, 3).map(cf => {
-    const date = cf.endDate ? new Date(raw(cf.endDate) * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
-    const ops  = raw(cf.totalCashFromOperatingActivities ?? cf.operatingCashflow);
-    const capex= raw(cf.capitalExpenditures);
-    const fcf  = (ops != null && capex != null) ? ops + capex : (raw(cf.freeCashFlow) ?? null); // capex is negative in Yahoo
-    const fcfCls = fcf == null ? '' : fcf >= 0 ? 'text-green' : 'text-red';
-    return `<tr><td>${date}</td><td>$${fmt(ops)}</td><td>$${fmt(capex)}</td><td class="${fcfCls}">$${fmt(fcf)}</td></tr>`;
-  }).join('');
+  if (useEdgar) {
+    // Build table from EDGAR quarterly data (last 4 quarters)
+    const edgarQtrs = eg.quarterlyRevenue.slice(0, 4);
+    incomeRows = edgarQtrs.map((r, i) => {
+      const ni  = eg.quarterlyNetIncome?.[i]?.value;
+      const eps = eg.quarterlyEPS?.[i]?.value;
+      const gp  = eg.quarterlyGrossProfit?.[i]?.value;
+      const dateStr = r.date ? new Date(r.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
+      const prevRev = edgarQtrs[i+1]?.value;
+      const grw = r.value && prevRev ? ((r.value - prevRev) / Math.abs(prevRev) * 100) : null;
+      const grwHtml = grw != null ? `<span class="${grw >= 0 ? 'text-green' : 'text-red'}" style="font-size:11px"> ${grw >= 0 ? '▲' : '▼'}${Math.abs(grw).toFixed(1)}%</span>` : '';
+      const niCls = ni == null ? '' : ni >= 0 ? 'text-green' : 'text-red';
+      const gpStr = gp != null ? `$${fmt(gp)}` : 'N/A';
+      return `<tr><td>${dateStr}</td><td>$${fmt(r.value)}${grwHtml}</td><td>${gpStr}</td><td class="${niCls}">$${fmt(ni)}</td><td>${eps != null ? '$' + (+eps).toFixed(2) : 'N/A'}</td></tr>`;
+    }).join('');
 
-  const revTrend = (() => {
+    const vals = edgarQtrs.map(r => r.value).filter(v => v != null);
+    if (vals.length >= 2) revTrend = vals[0] > vals[vals.length-1] ? '🟢 نمو إيجابي في الإيرادات' : vals[0] < vals[vals.length-1] ? '🔴 تراجع في الإيرادات' : '🟡 إيرادات مستقرة';
+  } else {
+    // Fallback to Yahoo Finance
+    const last3 = iq.slice(0, 3);
+    if (!last3.length) return `
+      <div class="card">
+        <h3 class="card-title"><span class="section-num">03</span> 📊 التقارير المالية الثلاثة الأخيرة</h3>
+        <p class="text-muted" style="font-size:13px">البيانات غير متاحة</p>
+      </div>`;
+    incomeRows = last3.map((q, i) => {
+      const rev = raw(q.totalRevenue), ni = raw(q.netIncome), eps = raw(q.dilutedEps ?? q.basicEps);
+      const date = q.endDate ? new Date(raw(q.endDate) * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
+      const prevRev = i < last3.length - 1 ? raw(last3[i+1].totalRevenue) : null;
+      const grw = rev && prevRev ? ((rev - prevRev) / Math.abs(prevRev) * 100) : null;
+      const grwHtml = grw != null ? `<span class="${grw >= 0 ? 'text-green' : 'text-red'}" style="font-size:11px"> ${grw >= 0 ? '▲' : '▼'}${Math.abs(grw).toFixed(1)}%</span>` : '';
+      const niCls = ni == null ? '' : ni >= 0 ? 'text-green' : 'text-red';
+      return `<tr><td>${date}</td><td>$${fmt(rev)}${grwHtml}</td><td>N/A</td><td class="${niCls}">$${fmt(ni)}</td><td>${eps != null ? '$' + eps.toFixed(2) : 'N/A'}</td></tr>`;
+    }).join('');
     const vals = last3.map(q => raw(q.totalRevenue)).filter(v => v != null);
-    if (vals.length < 2) return '';
-    return vals[0] > vals[vals.length-1] ? '🟢 نمو إيجابي في الإيرادات' : vals[0] < vals[vals.length-1] ? '🔴 تراجع في الإيرادات' : '🟡 إيرادات مستقرة';
-  })();
+    if (vals.length >= 2) revTrend = vals[0] > vals[vals.length-1] ? '🟢 نمو إيجابي في الإيرادات' : vals[0] < vals[vals.length-1] ? '🔴 تراجع في الإيرادات' : '🟡 إيرادات مستقرة';
+  }
+
+  /* Cash flow table — prefer EDGAR */
+  let cfRows = '';
+  if (eg?.quarterlyOCF?.length >= 2) {
+    cfRows = eg.quarterlyOCF.slice(0, 4).map((ocf, i) => {
+      const capex = eg.quarterlyCapex?.[i]?.value;
+      const fcf   = ocf.value != null && capex != null ? ocf.value - capex : null;
+      const dateStr = ocf.date ? new Date(ocf.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
+      const fcfCls  = fcf == null ? '' : fcf >= 0 ? 'text-green' : 'text-red';
+      const capexStr= capex != null ? `-$${fmt(capex)}` : 'N/A';
+      return `<tr><td>${dateStr}</td><td>$${fmt(ocf.value)}</td><td>${capexStr}</td><td class="${fcfCls}">$${fcf != null ? fmt(fcf) : 'N/A'}</td></tr>`;
+    }).join('');
+  } else if (cq.length) {
+    cfRows = cq.slice(0, 3).map(cf => {
+      const date = cf.endDate ? new Date(raw(cf.endDate) * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
+      const ops  = raw(cf.totalCashFromOperatingActivities ?? cf.operatingCashflow);
+      const capex= raw(cf.capitalExpenditures);
+      const fcf  = ops != null && capex != null ? ops + capex : null; // Yahoo: capex is negative
+      const fcfCls = fcf == null ? '' : fcf >= 0 ? 'text-green' : 'text-red';
+      return `<tr><td>${date}</td><td>$${fmt(ops)}</td><td>$${fmt(capex)}</td><td class="${fcfCls}">$${fcf != null ? fmt(fcf) : 'N/A'}</td></tr>`;
+    }).join('');
+  }
+
+  /* Balance sheet snapshot from EDGAR */
+  const bsHtml = eg ? `
+    <p class="subsection-label" style="margin-top:14px">الميزانية العمومية (آخر تقرير) <span style="font-size:11px;color:#22c55e">🏛️ SEC EDGAR</span></p>
+    <div class="metric-grid">
+      ${metric('Total Assets',      `$${fmt(eg.totalAssets)}`)}
+      ${metric('Total Liabilities', `$${fmt(eg.totalLiabilities)}`)}
+      ${metric('Stockholders Eq.',  `$${fmt(eg.equity)}`, statusCls(eg.equity, 0, -1))}
+      ${metric('Long-Term Debt',    `$${fmt(eg.longTermDebt)}`)}
+      ${metric('Short-Term Debt',   `$${fmt(eg.shortTermDebt)}`)}
+      ${metric('Cash & Equiv.',     `$${fmt(eg.cash)}`, 'green')}
+      ${metric('Net Debt',          eg.netDebt != null ? `$${fmt(eg.netDebt)}` : null, statusCls(eg.netDebt, 0, eg.cash ?? 0, false))}
+      ${metric('Goodwill',          eg.goodwill != null ? `$${fmt(eg.goodwill)}` : null)}
+    </div>` : '';
+
+  const colHeader = useEdgar
+    ? `<thead><tr><th>الربع</th><th>الإيرادات</th><th>Gross Profit</th><th>صافي الربح</th><th>EPS</th></tr></thead>`
+    : `<thead><tr><th>الربع</th><th>الإيرادات</th><th>Gross Profit</th><th>صافي الربح</th><th>EPS</th></tr></thead>`;
 
   return `
   <div class="card">
-    <h3 class="card-title"><span class="section-num">03</span> 📊 تحليل التقارير الربعية الثلاثة الأخيرة</h3>
+    <h3 class="card-title"><span class="section-num">03</span> 📊 تحليل التقارير الربعية الأخيرة ${srcLabel}</h3>
 
-    <p style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px">قائمة الدخل</p>
     <div style="overflow-x:auto">
       <table class="data-table">
-        <thead><tr><th>الربع</th><th>الإيرادات</th><th>صافي الربح</th><th>EPS</th></tr></thead>
-        <tbody>${rows}</tbody>
+        ${colHeader}
+        <tbody>${incomeRows}</tbody>
       </table>
     </div>
     ${revTrend ? `<p style="font-size:13px;font-weight:600;margin:10px 0">${revTrend}</p>` : ''}
 
     ${cfRows ? `
-    <p style="font-size:12px;font-weight:700;color:var(--accent);margin:14px 0 8px">التدفقات النقدية</p>
+    <p class="subsection-label" style="margin-top:14px">التدفقات النقدية ${useEdgar ? '<span style="font-size:11px;color:#22c55e">🏛️ SEC EDGAR</span>' : ''}</p>
     <div style="overflow-x:auto">
       <table class="data-table">
-        <thead><tr><th>الربع</th><th>التدفق التشغيلي</th><th>CAPEX</th><th>Free Cash Flow</th></tr></thead>
+        <thead><tr><th>الربع</th><th>التدفق التشغيلي</th><th>CapEx</th><th>Free Cash Flow</th></tr></thead>
         <tbody>${cfRows}</tbody>
       </table>
     </div>` : ''}
+
+    ${bsHtml}
   </div>`;
 }
 
 /* ─── SEC 4: Financial Analysis + BAM ──────────────────────────────────── */
-function sec4(fd, ks, sd, bq, cq) {
+function sec4(fd, ks, sd, bq, cq, eg) {
   const pe    = raw(ks.trailingPE);
   const fwdPE = raw(ks.forwardPE ?? fd.forwardPE);
   const peg   = raw(ks.pegRatio);
@@ -365,30 +432,42 @@ function sec4(fd, ks, sd, bq, cq) {
   const ebitda= raw(ks.enterpriseToEbitda);     // EV/EBITDA
   const evRev = raw(ks.enterpriseToRevenue);
 
-  /* Proper Debt/EBITDA from balance sheet if available */
+  /* Debt/EBITDA — prefer SEC EDGAR (official, calculated from actual filings) */
   let debtEbitda = null;
-  if (bq.length && fd.ebitda != null) {
+  let debtEbitdaSource = '';
+  if (eg?.debtToEbitda != null) {
+    debtEbitda = String(eg.debtToEbitda);
+    debtEbitdaSource = '🏛️ SEC EDGAR';
+  } else if (bq.length && fd.ebitda != null) {
     const totalDebt = raw(bq[0].totalDebt ?? bq[0].longTermDebt);
     debtEbitda = totalDebt != null && raw(fd.ebitda) ? (totalDebt / Math.abs(raw(fd.ebitda))).toFixed(2) : null;
+    debtEbitdaSource = 'Yahoo Finance';
   }
 
-  /* BAM score */
+  /* EDGAR-calculated ratios */
+  const edgarROE = eg?.roeEdgar;
+  const edgarDE  = eg?.debtToEquity;
+
+  /* BAM score — prefer EDGAR data for accuracy */
   let bamScore = 0, bamMax = 0;
   const bamRows = [];
 
-  if (roe != null) {
+  // ROE — prefer EDGAR calculation (from official filings)
+  const roeVal = edgarROE ?? roe;
+  const roeSource = edgarROE != null ? ' 🏛️' : '';
+  if (roeVal != null) {
     bamMax += 35;
-    const roePct = roe * 100;
+    const roePct = roeVal * 100;
     const cls = roePct >= 15 ? 'green' : roePct >= 10 ? 'yellow' : 'red';
     bamScore += cls === 'green' ? 35 : cls === 'yellow' ? 18 : 0;
-    bamRows.push({ key: 'ROE (>15% ✓)', val: `${roePct.toFixed(1)}%`, cls });
+    bamRows.push({ key: `ROE (>15% ✓)${roeSource}`, val: `${roePct.toFixed(1)}%`, cls });
   }
   if (debtEbitda != null) {
     bamMax += 35;
     const v = parseFloat(debtEbitda);
     const cls = v < 2 ? 'green' : v < 4 ? 'yellow' : 'red';
     bamScore += cls === 'green' ? 35 : cls === 'yellow' ? 18 : 0;
-    bamRows.push({ key: 'Debt/EBITDA (<2x ✓)', val: `${debtEbitda}x`, cls });
+    bamRows.push({ key: `Debt/EBITDA (<2x ✓) ${debtEbitdaSource}`, val: `${debtEbitda}x`, cls });
   } else if (de != null) {
     bamMax += 35;
     const cls = de < 0.5 ? 'green' : de < 1.5 ? 'yellow' : 'red';
@@ -452,11 +531,12 @@ function sec4(fd, ks, sd, bq, cq) {
       ${metric('Gross Margin',    fmtPct(gMgn),  statusCls(gMgn, 0.4, 0.2))}
       ${metric('Op. Margin',      fmtPct(oMgn),  statusCls(oMgn, 0.15, 0.05))}
       ${metric('Net Margin',      fmtPct(pMgn),  statusCls(pMgn, 0.15, 0.03))}
-      ${metric('ROE',             fmtPct(roe),   statusCls(roe, 0.15, 0.08))}
+      ${metric('ROE', fmtPct(edgarROE ?? roe), statusCls(edgarROE ?? roe, 0.15, 0.08), edgarROE != null ? '🏛️ SEC EDGAR' : '')}
       ${metric('ROA',             fmtPct(roa),   statusCls(roa, 0.1, 0.03))}
-      ${metric('Debt/Equity',     de != null ? `${de.toFixed(2)}x` : null, statusCls(de, 0, 1.5, false))}
-      ${debtEbitda != null ? metric('Debt/EBITDA',  `${debtEbitda}x`, statusCls(parseFloat(debtEbitda), 0, 4, false)) : ''}
-      ${metric('Free Cash Flow',  `$${fmt(raw(fd.freeCashflow))}`)}
+      ${metric('Debt/Equity', edgarDE != null ? `${edgarDE.toFixed(2)}x` : de != null ? `${de.toFixed(2)}x` : null, statusCls(edgarDE ?? de, 0, 1.5, false), edgarDE != null ? '🏛️ SEC EDGAR' : '')}
+      ${debtEbitda != null ? metric(`Debt/EBITDA ${debtEbitdaSource}`, `${debtEbitda}x`, statusCls(parseFloat(debtEbitda), 0, 4, false)) : ''}
+      ${metric('Free Cash Flow', `$${fmt(eg?.ttmFCF ?? raw(fd.freeCashflow))}`, '', eg?.ttmFCF != null ? '🏛️ SEC EDGAR' : '')}
+      ${eg?.ttmEbitda != null ? metric('EBITDA TTM 🏛️', `$${fmt(eg.ttmEbitda)}`) : ''}
     </div>
 
     <p class="subsection-label">د) تقييم P/E (وفق أعتاب B.A.M)</p>
@@ -676,7 +756,7 @@ function sec7(fd, ks, q, sd) {
 }
 
 /* ─── SEC 8: Final Summary ──────────────────────────────────────────────── */
-function sec8(fd, ks, rt, q) {
+function sec8(fd, ks, rt, q, eg) {
   let score = 0, max = 0;
   const add = (val, good, weight) => {
     max += weight;
@@ -684,7 +764,8 @@ function sec8(fd, ks, rt, q) {
     if (val >= good) score += weight;
     else if (val >= good / 2) score += weight * 0.5;
   };
-  add(fd.returnOnEquity, 0.15, 20);
+  // Prefer EDGAR data where available
+  add(eg?.roeEdgar ?? fd.returnOnEquity, 0.15, 20);
   add(fd.profitMargins,  0.15, 15);
   add(fd.revenueGrowth,  0.10, 15);
   add(fd.earningsGrowth, 0.10, 15);

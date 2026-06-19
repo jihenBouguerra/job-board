@@ -2,12 +2,14 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { saveStock, getStock, getAllStocks, deleteStock, updateNotes } from './database.js';
+import { getEDGARData } from './edgar.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
+// ─── Yahoo Finance ──────────────────────────────────────────────────────────
 const YF_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
   'Accept': 'application/json',
@@ -15,40 +17,30 @@ const YF_HEADERS = {
   'Referer': 'https://finance.yahoo.com/',
 };
 
-// All available free modules from Yahoo Finance quoteSummary
-const MODULES = [
-  'assetProfile',
-  'financialData',
-  'defaultKeyStatistics',
-  'summaryDetail',
-  'price',
-  'incomeStatementHistoryQuarterly',
-  'cashflowStatementHistoryQuarterly',
-  'balanceSheetHistoryQuarterly',
-  'earningsHistory',
-  'recommendationTrend',
-  'upgradeDowngradeHistory',
-  'majorHoldersBreakdown',
-  'institutionOwnership',
-  'insiderHolders',
-  'insiderTransactions',
-  'calendarEvents',
-  'earningsTrend',
+const YF_MODULES = [
+  'assetProfile', 'financialData', 'defaultKeyStatistics', 'summaryDetail', 'price',
+  'incomeStatementHistoryQuarterly', 'cashflowStatementHistoryQuarterly',
+  'balanceSheetHistoryQuarterly', 'earningsHistory', 'recommendationTrend',
+  'upgradeDowngradeHistory', 'majorHoldersBreakdown', 'institutionOwnership',
+  'insiderHolders', 'insiderTransactions', 'calendarEvents', 'earningsTrend',
 ].join(',');
 
-function raceTimeout(promise, ms = 10_000) {
-  return Promise.race([
-    promise,
-    new Promise((_, rej) => setTimeout(() => rej(new Error('Request timeout')), ms)),
-  ]);
+function timeout(ms) {
+  return new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
 }
 
-async function fetchStockData(symbol) {
+async function fetchYahoo(symbol) {
   const sym = encodeURIComponent(symbol);
 
   const [chartRes, summaryRes] = await Promise.allSettled([
-    raceTimeout(fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`, { headers: YF_HEADERS })),
-    raceTimeout(fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=${MODULES}`, { headers: YF_HEADERS })),
+    Promise.race([
+      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`, { headers: YF_HEADERS }),
+      timeout(10_000),
+    ]),
+    Promise.race([
+      fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=${YF_MODULES}`, { headers: YF_HEADERS }),
+      timeout(10_000),
+    ]),
   ]);
 
   let quote = null;
@@ -56,17 +48,14 @@ async function fetchStockData(symbol) {
     const json = await chartRes.value.json().catch(() => null);
     const meta = json?.chart?.result?.[0]?.meta;
     if (meta?.symbol) {
+      const prev = meta.chartPreviousClose ?? meta.previousClose;
       quote = {
         symbol: meta.symbol,
         longName: meta.longName || meta.shortName || null,
         shortName: meta.shortName || null,
         regularMarketPrice: meta.regularMarketPrice ?? null,
-        regularMarketChange: meta.chartPreviousClose != null
-          ? (meta.regularMarketPrice - meta.chartPreviousClose)
-          : null,
-        regularMarketChangePercent: meta.chartPreviousClose
-          ? (meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose
-          : null,
+        regularMarketChange: prev != null && meta.regularMarketPrice != null ? meta.regularMarketPrice - prev : null,
+        regularMarketChangePercent: prev ? (meta.regularMarketPrice - prev) / prev : null,
         regularMarketVolume: meta.regularMarketVolume ?? null,
         averageDailyVolume3Month: meta.averageDailyVolume3Month ?? null,
         fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh ?? null,
@@ -85,14 +74,14 @@ async function fetchStockData(symbol) {
   }
 
   if (!quote?.symbol) {
-    const status = chartRes.status === 'rejected' ? chartRes.reason?.message : 'HTTP Error';
-    throw new Error(status === 'Request timeout' ? 'انتهت مهلة الاتصال بـ Yahoo Finance' : 'السهم غير موجود أو يتعذر الوصول إلى Yahoo Finance من هذه الشبكة');
+    const reason = chartRes.status === 'rejected' ? chartRes.reason?.message : `HTTP ${chartRes.value?.status}`;
+    throw new Error(`Yahoo Finance غير متاح (${reason}). تأكد من الاتصال بالإنترنت.`);
   }
 
   return { quote, summary };
 }
 
-/* ═══ ROUTES ═══════════════════════════════════════════════════════════════ */
+// ─── Routes ─────────────────────────────────────────────────────────────────
 
 app.post('/api/stock/analyze', async (req, res) => {
   const { symbol, forceRefresh = false } = req.body;
@@ -100,6 +89,7 @@ app.post('/api/stock/analyze', async (req, res) => {
 
   const sym = symbol.toUpperCase().trim();
 
+  // Return cache if fresh (< 6 hours)
   if (!forceRefresh) {
     const cached = getStock(sym);
     if (cached) {
@@ -108,19 +98,28 @@ app.post('/api/stock/analyze', async (req, res) => {
     }
   }
 
+  // Fetch Yahoo Finance + SEC EDGAR in parallel
+  let yahooData, edgarData;
+
   try {
-    const data = await fetchStockData(sym);
-    const name = data.quote.longName || data.quote.shortName || sym;
-    saveStock(sym, name, data);
-    res.json({ stock: getStock(sym), fromCache: false });
+    [yahooData, edgarData] = await Promise.all([
+      fetchYahoo(sym),
+      getEDGARData(sym),   // returns null if unavailable — non-blocking
+    ]);
   } catch (err) {
+    // Yahoo failed — serve stale cache if available
     const cached = getStock(sym);
     if (cached) return res.json({ stock: cached, fromCache: true, stale: true });
-    res.status(503).json({ error: err.message });
+    return res.status(503).json({ error: err.message });
   }
+
+  const name = yahooData.quote.longName || yahooData.quote.shortName || sym;
+  saveStock(sym, name, { quote: yahooData.quote, summary: yahooData.summary, edgar: edgarData });
+
+  res.json({ stock: getStock(sym), fromCache: false });
 });
 
-app.get('/api/stocks',        (_q, res) => res.json({ stocks: getAllStocks() }));
+app.get('/api/stocks',        (_q, r) => r.json({ stocks: getAllStocks() }));
 app.get('/api/stock/:symbol', (req, res) => {
   const s = getStock(req.params.symbol);
   if (!s) return res.status(404).json({ error: 'السهم غير موجود' });
@@ -130,4 +129,4 @@ app.delete('/api/stock/:symbol', (req, res) => { deleteStock(req.params.symbol);
 app.put('/api/stock/:symbol/notes', (req, res) => { updateNotes(req.params.symbol, req.body.notes || ''); res.json({ success: true }); });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Stock Analyst App → http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ Stock Analyst → http://localhost:${PORT}`));
