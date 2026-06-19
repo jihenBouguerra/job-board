@@ -201,7 +201,7 @@ function renderAnalysis({ stock, fromCache, stale, isDemo }) {
     sec3(iq, cq, bq, eg),
     sec4(fd, ks, sd, bq, cq, eg),
     sec5(q, ks, ug, eh, ce, et),
-    sec6(rt, fd, q),
+    sec6(rt, fd, q, ks),
     sec7(fd, ks, q, sd),
     sec8(fd, ks, rt, q, eg),
   ].join('');
@@ -250,7 +250,7 @@ function sec1(ap, q, fd, sd, eg) {
   </div>`;
 }
 
-/* ─── SEC 2: Alliances & Ownership ─────────────────────────────────────── */
+/* ─── SEC 2: Alliances & Big Ownership ─────────────────────────────────── */
 function sec2(mh, io, ih, it) {
   const instPct = mh.institutionsPercentHeld;
   const insPct  = mh.insidersPercentHeld;
@@ -265,24 +265,43 @@ function sec2(mh, io, ih, it) {
       <td>${fmtDate(raw(o.reportDate ?? o.date))}</td>
     </tr>`).join('');
 
-  const recentIT = it.slice(0, 4).map(t => `
+  const recentIT = it.slice(0, 6).map(t => {
+    const isSell = t.transactionText?.includes('Sale') || t.transactionText?.includes('Sell');
+    return `
     <div class="analyst-item">
       <div>
         <div style="font-weight:700;font-size:13px">${na(t.filerName)}</div>
         <div class="analyst-firm">${na(t.filerRelation)} · ${fmtDate(raw(t.startDate))}</div>
       </div>
-      <span class="analyst-grade grade-${t.transactionText?.includes('Sale') || t.transactionText?.includes('Sell') ? 'sell' : 'buy'}" style="font-size:11px">${na(t.transactionText)?.split('(')[0]?.trim() || 'N/A'}</span>
-    </div>`).join('');
+      <span class="analyst-grade grade-${isSell ? 'sell' : 'buy'}" style="font-size:11px">${na(t.transactionText)?.split('(')[0]?.trim() || 'N/A'}</span>
+    </div>`;
+  }).join('');
+
+  /* Insider direction — buy/sell ratio from recent transactions */
+  const buys  = it.filter(t => !t.transactionText?.includes('Sale') && !t.transactionText?.includes('Sell')).length;
+  const sells = it.filter(t =>  t.transactionText?.includes('Sale') ||  t.transactionText?.includes('Sell')).length;
+  const insiderDir = it.length === 0 ? '' :
+    buys > sells * 1.5 ? '🟢 المطلعون يشترون — إشارة إيجابية' :
+    sells > buys * 1.5 ? '🔴 المطلعون يبيعون — يستحق المتابعة' :
+    '🟡 معاملات المطلعين متوازنة';
 
   return `
   <div class="card">
-    <h3 class="card-title"><span class="section-num">02</span> 🤝 الملكية المؤسسية والداخلية</h3>
+    <h3 class="card-title"><span class="section-num">02</span> 🤝 التحالفات والملكية الكبرى</h3>
+
+    <p class="subsection-label">الشراكات مع شركات التكنولوجيا الكبرى (Big Tech)</p>
+    <div style="background:rgba(14,165,233,0.06);border:1px solid rgba(14,165,233,0.15);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--muted)">
+      ℹ️ تفاصيل العقود (الطرف المتعاقد، تاريخ الانتهاء، الأثر النقدي) تستلزم بحثاً في الأخبار الأخيرة — استخدم مصادر مثل SEC Filings أو Bloomberg لهذه الشركة تحديداً.
+    </div>
+
+    <p class="subsection-label">الملكية المؤسسية والداخلية</p>
     <div class="metric-grid" style="margin-bottom:16px">
       ${metric('Institutional %',  fmtPct(instPct), instCls, icon(instCls) + ' ' + (instPct >= 0.5 ? 'ثقة مؤسسية عالية' : instPct >= 0.3 ? 'معتدلة' : 'منخفضة'))}
       ${metric('Insider %',        fmtPct(insPct),  insCls,  icon(insCls) + ' ' + (insPct >= 0.05 ? 'مشاركة الإدارة جيدة' : 'ملكية محدودة'))}
       ${metric('Institutions #',   mh.institutionsCount != null ? mh.institutionsCount.toLocaleString() : null)}
       ${metric('Float %',          mh.institutionsPercentHeld && mh.insidersPercentHeld ? fmtPct(1 - mh.institutionsPercentHeld - mh.insidersPercentHeld) : null)}
     </div>
+    ${insiderDir ? `<p style="font-size:13px;font-weight:600;padding:10px;background:var(--card2);border-radius:8px;margin-bottom:12px">${insiderDir}</p>` : ''}
     <p style="font-size:11px;color:var(--muted);margin-bottom:10px">💡 وفق دراسة ECB 2025 — ملكية الإدارة الداخلية >5% ترتبط بأداء أعلى +4.6% سنوياً</p>
 
     ${topInst ? `
@@ -386,21 +405,43 @@ function sec3(iq, cq, bq, eg) {
       ${metric('Goodwill',          eg.goodwill != null ? `$${fmt(eg.goodwill)}` : null)}
     </div>` : '';
 
-  const colHeader = useEdgar
-    ? `<thead><tr><th>الربع</th><th>الإيرادات</th><th>Gross Profit</th><th>صافي الربح</th><th>EPS</th></tr></thead>`
-    : `<thead><tr><th>الربع</th><th>الإيرادات</th><th>Gross Profit</th><th>صافي الربح</th><th>EPS</th></tr></thead>`;
+  /* Trend conclusion — margin trend from Edgar or Yahoo */
+  let marginTrend = '';
+  if (useEdgar && eg.quarterlyGrossProfit?.length >= 2) {
+    const gp = eg.quarterlyGrossProfit;
+    const rev = eg.quarterlyRevenue;
+    const m0 = gp[0]?.value && rev[0]?.value ? gp[0].value / rev[0].value : null;
+    const m1 = gp[1]?.value && rev[1]?.value ? gp[1].value / rev[1].value : null;
+    if (m0 != null && m1 != null) {
+      marginTrend = m0 > m1 ? '🟢 هامش الربح الإجمالي في تحسّن' : m0 < m1 ? '🔴 هامش الربح الإجمالي ينكمش' : '🟡 هامش الربح مستقر';
+    }
+  }
+
+  const niTrend = useEdgar && eg.quarterlyNetIncome?.length >= 2
+    ? (eg.quarterlyNetIncome[0].value > eg.quarterlyNetIncome[1].value ? '🟢 صافي الربح في ارتفاع' : '🔴 صافي الربح في تراجع')
+    : '';
+
+  const conclusion = [revTrend, marginTrend, niTrend].filter(Boolean);
+  const overallConclusion = conclusion.length >= 2
+    ? (conclusion.filter(c => c.startsWith('🟢')).length >= 2 ? '✅ الاستنتاج: تحسّن مستمر في الأداء المالي' : conclusion.filter(c => c.startsWith('🔴')).length >= 2 ? '⚠️ الاستنتاج: تدهور في الأداء — راقب التقرير القادم' : '⚖️ الاستنتاج: أداء متذبذب — مراقبة مستمرة')
+    : '';
 
   return `
   <div class="card">
-    <h3 class="card-title"><span class="section-num">03</span> 📊 تحليل التقارير الربعية الأخيرة ${srcLabel}</h3>
+    <h3 class="card-title"><span class="section-num">03</span> 📊 تحليل التقارير المالية الثلاثة الأخيرة ${srcLabel}</h3>
 
     <div style="overflow-x:auto">
       <table class="data-table">
-        ${colHeader}
+        <thead><tr><th>الربع</th><th>الإيرادات</th><th>Gross Profit</th><th>صافي الربح</th><th>EPS</th></tr></thead>
         <tbody>${incomeRows}</tbody>
       </table>
     </div>
-    ${revTrend ? `<p style="font-size:13px;font-weight:600;margin:10px 0">${revTrend}</p>` : ''}
+
+    ${conclusion.length ? `
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+      ${conclusion.map(c => `<p style="font-size:13px;font-weight:600;padding:8px 12px;background:var(--card2);border-radius:8px">${c}</p>`).join('')}
+      ${overallConclusion ? `<p style="font-size:14px;font-weight:700;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px">${overallConclusion}</p>` : ''}
+    </div>` : ''}
 
     ${cfRows ? `
     <p class="subsection-label" style="margin-top:14px">التدفقات النقدية ${useEdgar ? '<span style="font-size:11px;color:#22c55e">🏛️ SEC EDGAR</span>' : ''}</p>
@@ -594,10 +635,10 @@ function sec5(q, ks, ug, eh, ce, et) {
 
   return `
   <div class="card">
-    <h3 class="card-title"><span class="section-num">05</span> ⏳ محفزات السعر والأحداث</h3>
+    <h3 class="card-title"><span class="section-num">05</span> ⏳ تاريخ المحفزات السعرية (Catalyst History)</h3>
 
     ${rangePct != null ? `
-    <p style="font-size:12px;color:var(--muted);margin-bottom:4px">موقع السعر الحالي في النطاق السنوي</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:4px">موقع السعر الحالي في النطاق السنوي (52 أسبوعاً)</p>
     <div class="range-bar-wrap">
       <div class="range-bar-track">
         <div class="range-bar-fill" style="width:${rangePct}%"></div>
@@ -619,7 +660,8 @@ function sec5(q, ks, ug, eh, ce, et) {
     </div>` : ''}
 
     ${ehRows ? `
-    <p class="subsection-label">تاريخ EPS الفعلي مقابل التوقعات</p>
+    <p class="subsection-label">أحداث أرباح EPS — الفعلي مقابل التوقعات</p>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">مفاجأة إيجابية 🟢 = تجاوز التوقعات (محفز صعودي) · مفاجأة سلبية 🔴 = إخفاق (محفز هبوطي)</p>
     <div style="overflow-x:auto">
       <table class="data-table">
         <thead><tr><th>الربع</th><th>التوقع</th><th>الفعلي</th><th>المفاجأة</th></tr></thead>
@@ -628,24 +670,34 @@ function sec5(q, ks, ug, eh, ce, et) {
     </div>` : ''}
 
     ${recentUg.length ? `
-    <p class="subsection-label" style="margin-top:14px">آخر تحركات المحللين</p>
+    <p class="subsection-label" style="margin-top:14px">أحداث تحركات المحللين (تأثير على السعر)</p>
     <div class="analyst-list">
       ${recentUg.map(u => {
         const gc = gradeClass(u.toGrade);
+        const isUpgrade   = u.action === 'up'   || (u.fromGrade && gradeClass(u.fromGrade) === 'sell' && gc !== 'sell');
+        const isDowngrade = u.action === 'down'  || (u.fromGrade && gradeClass(u.fromGrade) === 'buy'  && gc === 'sell');
+        const eventLabel  = isUpgrade ? '🟢 ترقية' : isDowngrade ? '🔴 تخفيض' : '🟡 تأكيد';
         return `<div class="analyst-item">
           <div>
             <div class="analyst-firm">${na(u.firm)} · ${fmtDate(u.epochGradeDate)}</div>
-            <div style="font-size:12px;color:var(--muted)">${u.fromGrade ? u.fromGrade + ' ← ' : ''}${na(u.toGrade)}</div>
+            <div style="font-size:12px;color:var(--muted)">${u.fromGrade ? u.fromGrade + ' → ' : ''}${na(u.toGrade)}</div>
           </div>
-          <span class="analyst-grade grade-${gc}">${gc === 'buy' ? '🟢 شراء' : gc === 'sell' ? '🔴 بيع' : '🟡 احتفاظ'}</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+            <span class="analyst-grade grade-${gc}">${gc === 'buy' ? '🟢 شراء' : gc === 'sell' ? '🔴 بيع' : '🟡 احتفاظ'}</span>
+            <span style="font-size:10px;color:var(--muted)">${eventLabel}</span>
+          </div>
         </div>`;
       }).join('')}
     </div>` : ''}
+
+    <div style="margin-top:14px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:12px;font-size:12px;color:var(--muted)">
+      📌 للأحداث السياسية والاقتصادية الكبرى (قرارات الفيدرالي، الحروب التجارية، التغييرات التنظيمية)، ارجع إلى التقارير الصحفية وأرشيف الأخبار الخاص بالشركة.
+    </div>
   </div>`;
 }
 
 /* ─── SEC 6: Market Psychology & Risks ─────────────────────────────────── */
-function sec6(rt, fd, q) {
+function sec6(rt, fd, q, ks) {
   const latest = rt[0];
   const total  = latest ? (latest.strongBuy + latest.buy + latest.hold + latest.sell + latest.strongSell) : 0;
   const buys   = latest ? (latest.strongBuy + latest.buy) : 0;
@@ -665,19 +717,51 @@ function sec6(rt, fd, q) {
     mean <= 1.5 ? '🟢 شراء قوي' : mean <= 2.5 ? '🟢 شراء' :
     mean <= 3.5 ? '🟡 احتفاظ' : mean <= 4.5 ? '🔴 بيع' : '🔴 بيع قوي';
 
-  /* Risks computed from real data only */
+  /* Institutional direction derived from analyst consensus + buy/sell ratio */
+  let instDirection = '';
+  if (total > 0) {
+    if (buyPct >= 65)       instDirection = '🟢 كبار المستثمرين يشترون — إجماع شراء قوي';
+    else if (buyPct >= 45)  instDirection = '🟡 المؤسسات محايدة — توازن بين الشراء والاحتفاظ';
+    else                    instDirection = '🔴 كبار المستثمرين يبيعون — إجماع بيع';
+  }
+
+  /* Top 3 risks from real data */
   const risks = [];
-  const beta = q.beta;
-  if (beta > 1.5) risks.push({ cls: 'red', text: `Beta مرتفع (${beta?.toFixed(2)}) — تقلب عالٍ` });
-  if (fd.debtToEquity > 150) risks.push({ cls: 'red', text: `Debt/Equity مرتفع (${(fd.debtToEquity/100).toFixed(2)}x)` });
-  if (fd.profitMargins < 0) risks.push({ cls: 'red', text: 'هوامش ربح سلبية' });
-  if (upside != null && parseFloat(upside) < -10) risks.push({ cls: 'red', text: `هدف المحللين أدنى من السعر الحالي بـ ${Math.abs(upside)}%` });
-  if (fd.revenueGrowth < -0.05) risks.push({ cls: 'red', text: `تراجع الإيرادات ${fmtPct(fd.revenueGrowth)}` });
-  if (!risks.length) risks.push({ cls: 'green', text: 'لا مخاطر رئيسية ظاهرة في البيانات المتاحة' });
+  const beta = raw(ks?.beta) ?? q.beta;
+  if (beta > 1.5)                    risks.push(`Beta مرتفع (${beta?.toFixed(2)}) — تقلب عالٍ مقارنة بالسوق`);
+  if (fd.debtToEquity > 150)         risks.push(`Debt/Equity مرتفع (${(fd.debtToEquity/100).toFixed(2)}x) — عبء ديون ثقيل`);
+  if (fd.profitMargins < 0)          risks.push('هوامش ربح سلبية — الشركة تُسجّل خسائر');
+  if (upside != null && parseFloat(upside) < -10) risks.push(`هدف المحللين أدنى من السعر بـ ${Math.abs(upside)}%`);
+  if (fd.revenueGrowth < -0.05)     risks.push(`تراجع إيرادات ${fmtPct(fd.revenueGrowth)} — خطر انكماش`);
+  if (fd.earningsGrowth < -0.10)    risks.push(`تراجع أرباح حاد ${fmtPct(fd.earningsGrowth)}`);
+  if (!risks.length)                 risks.push('لا مخاطر رئيسية ظاهرة في البيانات المتاحة');
+
+  /* Bull case — based on real data signals */
+  const bullPoints = [];
+  if (upside != null && parseFloat(upside) > 10) bullPoints.push(`هدف المحللين أعلى بـ +${upside}% (${fmtUSD(targetMean)})`);
+  if (fd.revenueGrowth > 0.10)   bullPoints.push(`نمو إيرادات قوي (${fmtPct(fd.revenueGrowth)})`);
+  if (fd.grossMargins > 0.45)    bullPoints.push(`هامش إجمالي ممتاز (${fmtPct(fd.grossMargins)})`);
+  if (buyPct >= 60)              bullPoints.push(`${buys} من أصل ${total} محللاً يوصون بالشراء`);
+  if (fd.freeCashflow > 0)       bullPoints.push('تدفق نقدي حر إيجابي');
+  if (!bullPoints.length) bullPoints.push('N/A — بيانات غير كافية لتحديد محفزات الصعود');
+
+  /* Bear case */
+  const bearPoints = [];
+  const pe = raw(ks?.trailingPE);
+  if (pe > 35)                   bearPoints.push(`P/E مرتفع (${pe.toFixed(1)}) — التوقعات مبالغ فيها`);
+  if (fd.debtToEquity > 100)     bearPoints.push(`ديون مرتفعة (D/E ${(fd.debtToEquity/100).toFixed(2)}x)`);
+  if (fd.revenueGrowth < 0.02)  bearPoints.push('نمو بطيء يصعّب تبرير التقييم الحالي');
+  if (sellPct >= 20)             bearPoints.push(`${sells} محللاً يوصي بالبيع`);
+  if (fd.profitMargins < 0.05)  bearPoints.push(`هامش ربح هش (${fmtPct(fd.profitMargins)})`);
+  if (!bearPoints.length) bearPoints.push('N/A — لا مخاطر هبوط واضحة في البيانات المتاحة');
 
   return `
   <div class="card">
     <h3 class="card-title"><span class="section-num">06</span> ⚠️ سيكولوجية السوق والمخاطر</h3>
+
+    ${instDirection ? `
+    <p class="subsection-label">اتجاه كبار المستثمرين</p>
+    <p style="font-size:14px;font-weight:700;padding:10px 14px;background:var(--card2);border-radius:8px;margin-bottom:14px">${instDirection}</p>` : ''}
 
     ${total > 0 ? `
     <p class="subsection-label">توصيات ${total} محلل</p>
@@ -704,25 +788,28 @@ function sec6(rt, fd, q) {
       ${metric('Target High',           fmtUSD(fd.targetHighPrice), 'green')}
     </div>` : ''}
 
-    <p class="subsection-label">أكبر المخاطر المحتملة</p>
+    <p class="subsection-label">أكبر 3 مخاطر 🔴</p>
     <div class="key-points">
-      ${risks.slice(0, 3).map(r => `<div class="key-point"><span>${icon(r.cls)}</span><span>${r.text}</span></div>`).join('')}
+      ${risks.slice(0, 3).map(r => `<div class="key-point"><span>🔴</span><span>${r}</span></div>`).join('')}
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:12px;text-align:center">
-        <p style="font-size:11px;color:var(--muted)">سيناريو الثور 🟢</p>
-        ${targetMean && curr ? `<p style="font-weight:700;font-size:16px;color:var(--green)">${fmtUSD(fd.targetHighPrice || targetMean)}</p>` : '<p style="color:var(--muted)">N/A</p>'}
+    <p class="subsection-label" style="margin-top:14px">سيناريو محامي الشيطان</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:12px">
+        <p style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">حالة الثور 🟢<br><span style="font-size:10px;font-weight:400;color:var(--muted)">لماذا قد يرتفع السهم؟</span></p>
+        ${bullPoints.map(b => `<p style="font-size:12px;color:var(--text);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">${b}</p>`).join('')}
+        ${fd.targetHighPrice && curr ? `<p style="font-size:15px;font-weight:700;color:var(--green);margin-top:8px">هدف الصعود: ${fmtUSD(fd.targetHighPrice)}</p>` : ''}
       </div>
-      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px;text-align:center">
-        <p style="font-size:11px;color:var(--muted)">سيناريو الدب 🔴</p>
-        ${fd.targetLowPrice && curr ? `<p style="font-weight:700;font-size:16px;color:var(--red)">${fmtUSD(fd.targetLowPrice)}</p>` : '<p style="color:var(--muted)">N/A</p>'}
+      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px">
+        <p style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px">حالة الدب 🔴<br><span style="font-size:10px;font-weight:400;color:var(--muted)">لماذا قد ينخفض السهم؟</span></p>
+        ${bearPoints.map(b => `<p style="font-size:12px;color:var(--text);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">${b}</p>`).join('')}
+        ${fd.targetLowPrice && curr ? `<p style="font-size:15px;font-weight:700;color:var(--red);margin-top:8px">هدف الهبوط: ${fmtUSD(fd.targetLowPrice)}</p>` : ''}
       </div>
     </div>
   </div>`;
 }
 
-/* ─── SEC 7: Investment Horizon ─────────────────────────────────────────── */
+/* ─── SEC 7: Investment Horizon + Bubble Analysis ───────────────────────── */
 function sec7(fd, ks, q, sd) {
   const revGrw  = fd.revenueGrowth;
   const earGrw  = fd.earningsGrowth;
@@ -730,26 +817,85 @@ function sec7(fd, ks, q, sd) {
   const trailPE = raw(ks.trailingPE);
   const shortPct= raw(ks.sharesPercentSharesOut);
   const shortRat= raw(ks.shortRatio);
-  const pEgr = (fwdPE && trailPE) ? (fwdPE < trailPE ? '🟢 السوق يتوقع نمو أرباح (Forward P/E أقل)' : '🔴 توقع ضغط على الأرباح') : '';
+  const pEgr = (fwdPE && trailPE) ? (fwdPE < trailPE ? '🟢 السوق يتوقع نمو أرباح (Forward P/E أقل من Trailing)' : '🔴 السوق يتوقع ضغطاً على الأرباح (Forward P/E أعلى)') : '';
   const divYld  = raw(sd.dividendYield ?? ks.dividendYield);
-  const fwdDivYld = raw(sd.dividendYield);
-  const trailDivYld = raw(ks.trailingAnnualDividendYield);
   const payoutRatio = raw(ks.payoutRatio);
+  const peg = raw(ks.pegRatio);
+
+  /* Bubble analysis */
+  let bubbleVerdict = '', bubbleCls = '', bubbleDetail = '';
+  if (trailPE != null) {
+    if (trailPE < 9.6) {
+      bubbleVerdict = '🟢 مقيّم بأقل من قيمته — لا فقاعة';
+      bubbleCls = 'green';
+      bubbleDetail = `P/E ${trailPE.toFixed(1)} دون العتبة التاريخية (9.6) — فرصة تاريخية نادرة`;
+    } else if (trailPE <= 25.1) {
+      bubbleVerdict = '🟡 تقييم معقول — لا مؤشر فقاعة';
+      bubbleCls = 'yellow';
+      bubbleDetail = `P/E ${trailPE.toFixed(1)} ضمن النطاق المنطقي التاريخي (9.6–25.1)`;
+    } else if (trailPE <= 40) {
+      bubbleVerdict = '🟠 تقييم مرتفع — بداية خطر';
+      bubbleCls = 'yellow';
+      bubbleDetail = `P/E ${trailPE.toFixed(1)} تجاوز عتبة الخطر (25.1) — احذر من التصحيح`;
+    } else {
+      bubbleVerdict = '🔴 تقييم مبالغ فيه — خطر فقاعة';
+      bubbleCls = 'red';
+      bubbleDetail = `P/E ${trailPE.toFixed(1)} مرتفع جداً — العائد المتوقع التاريخي ~0.5% (B.A.M)`;
+    }
+  }
+  if (peg != null) {
+    bubbleDetail += ` · PEG ${peg.toFixed(2)} ${peg < 1 ? '🟢 (نمو مقيّم بشكل معقول)' : peg > 2 ? '🔴 (التقييم لا يبرره النمو)' : '🟡'}`;
+  }
+
+  /* Correction triggers */
+  const triggers = [];
+  if (shortPct > 0.05)           triggers.push(`نسبة البيع على المكشوف ${fmtPct(shortPct)} — ضغط بيعي ضاغط`);
+  if (trailPE > 30)              triggers.push(`P/E ${trailPE?.toFixed(1)} — أي إخفاق في الأرباح سيسبب تصحيحاً حاداً`);
+  if (fd.revenueGrowth < 0.05)  triggers.push('نمو بطيء — إذا تباطأ أكثر سيعيد السوق تسعير السهم');
+  if (fd.debtToEquity > 100)    triggers.push(`ديون مرتفعة — ارتفاع الفائدة يضغط على التدفقات النقدية`);
+  if (earGrw < 0)               triggers.push('انكماش الأرباح — قد يؤدي لخفض توصيات المحللين');
+  if (!triggers.length)         triggers.push('لا محفزات تصحيح واضحة في البيانات الحالية');
+
+  /* Strategy type */
+  const isLongTerm = trailPE != null && trailPE < 25 && (revGrw ?? 0) > 0.05 && (fd.profitMargins ?? 0) > 0.10;
+  const strategy = isLongTerm
+    ? '📐 الاستراتيجية: استثمار طويل الأجل — أساسيات قوية'
+    : trailPE != null && trailPE > 40
+    ? '🎲 الاستراتيجية: مضاربة — التقييم مرتفع جداً للاستثمار المحافظ'
+    : '⚖️ الاستراتيجية: متوسطة المدى — راقب نمو الأرباح ربعياً';
 
   return `
   <div class="card">
     <h3 class="card-title"><span class="section-num">07</span> 🔮 الأفق الاستثماري وتقييم الفقاعة</h3>
+
+    <p class="subsection-label">الاستراتيجية المقترحة</p>
+    <p style="font-size:14px;font-weight:700;padding:10px 14px;background:var(--card2);border-radius:8px;margin-bottom:14px">${strategy}</p>
+
     <div class="metric-grid" style="margin-bottom:14px">
       ${metric('Revenue Growth (YoY)',  fmtPct(revGrw),      statusCls(revGrw,  0.1, -0.05))}
       ${metric('Earnings Growth (YoY)', fmtPct(earGrw),      statusCls(earGrw,  0.1, -0.05))}
-      ${metric('Trailing P/E',          trailPE != null ? trailPE.toFixed(1) : null)}
-      ${metric('Forward P/E',           fwdPE != null ? fwdPE.toFixed(1) : null)}
+      ${metric('Trailing P/E',          trailPE != null ? trailPE.toFixed(1) : null, statusCls(trailPE, 0, 35, false))}
+      ${metric('Forward P/E',           fwdPE != null ? fwdPE.toFixed(1) : null, statusCls(fwdPE, 0, 30, false))}
+      ${metric('PEG Ratio',             peg != null ? peg.toFixed(2) : null, statusCls(peg, 0, 2, false))}
       ${metric('Short % of Float',      fmtPct(shortPct),    statusCls(shortPct, 0, 0.1, false))}
       ${metric('Short Ratio (Days)',     shortRat != null ? shortRat.toFixed(1) + 'd' : null, statusCls(shortRat, 0, 5, false))}
       ${metric('Dividend Yield',        divYld != null ? fmtPct(divYld) : null)}
       ${metric('Payout Ratio',          payoutRatio != null ? fmtPct(raw(payoutRatio)) : null)}
     </div>
-    ${pEgr ? `<p style="font-size:13px;font-weight:600;padding:10px;background:var(--card2);border-radius:8px">${pEgr}</p>` : ''}
+    ${pEgr ? `<p style="font-size:13px;font-weight:600;padding:10px;background:var(--card2);border-radius:8px;margin-bottom:12px">${pEgr}</p>` : ''}
+
+    ${bubbleVerdict ? `
+    <p class="subsection-label">تحليل الفقاعة — هل السهم مبالغ في تقييمه؟</p>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+      <p style="font-size:16px;font-weight:700;margin-bottom:6px">${bubbleVerdict}</p>
+      <p style="font-size:12px;color:var(--muted)">${bubbleDetail}</p>
+    </div>` : ''}
+
+    <p class="subsection-label">محفزات التصحيح المحتملة</p>
+    <div class="key-points">
+      ${triggers.slice(0, 4).map(t => `<div class="key-point"><span>⚡</span><span>${t}</span></div>`).join('')}
+    </div>
+
     <p style="margin-top:12px;font-size:12px;color:var(--muted)">
       💡 Short Ratio &gt;5 أيام = ضغط بيعي مرتفع قد يؤدي لـ Short Squeeze إذا تحرك السهم صعوداً
     </p>
@@ -787,11 +933,11 @@ function sec8(fd, ks, rt, q, eg) {
   }
 
   const pct = max > 0 ? Math.round(score / max * 100) : null;
-  let verdict, vcls, emoji;
-  if (pct == null)    { verdict = 'بيانات غير كافية'; vcls = 'hold'; emoji = '⚪'; }
-  else if (pct >= 70) { verdict = 'شراء 🟢';           vcls = 'buy';  emoji = '🚀'; }
-  else if (pct >= 45) { verdict = 'احتفاظ / مراقبة 🟡'; vcls = 'hold'; emoji = '⏸️'; }
-  else                { verdict = 'انتظار / حذر 🔴';   vcls = 'sell'; emoji = '⚠️'; }
+  let verdict, vcls, emoji, verdictReason;
+  if (pct == null)    { verdict = 'بيانات غير كافية'; vcls = 'hold'; emoji = '⚪'; verdictReason = 'البيانات غير كافية للحكم'; }
+  else if (pct >= 70) { verdict = 'شراء 🟢';           vcls = 'buy';  emoji = '🚀'; verdictReason = 'الأساسيات قوية والتقييم مناسب بناءً على السعر الحالي'; }
+  else if (pct >= 45) { verdict = 'احتفاظ / مراقبة 🟡'; vcls = 'hold'; emoji = '⏸️'; verdictReason = 'الأداء المالي مقبول لكن التقييم يستحق المتابعة قبل الشراء الإضافي'; }
+  else                { verdict = 'انتظار 🔴';          vcls = 'sell'; emoji = '⚠️'; verdictReason = 'الأساسيات أو التقييم لا يبرران الدخول بالسعر الحالي — انتظر فرصة أفضل'; }
 
   const strengths = [], risks2 = [];
   if (fd.returnOnEquity > 0.15)   strengths.push(`ROE مرتفع (${(fd.returnOnEquity*100).toFixed(0)}%) — كفاءة رأس المال ممتازة`);
@@ -812,6 +958,9 @@ function sec8(fd, ks, rt, q, eg) {
       <div class="verdict-text ${vcls}">${verdict}</div>
       ${pct != null ? `<div style="font-size:13px;color:var(--muted)">نتيجة التقييم الشامل: <strong>${pct}/100</strong></div>` : ''}
     </div>
+    <p style="font-size:13px;padding:12px 14px;background:var(--card2);border-radius:8px;margin:12px 0;border-right:3px solid ${vcls === 'buy' ? 'var(--green)' : vcls === 'sell' ? 'var(--red)' : 'var(--yellow)'}">
+      <strong>السبب الجوهري:</strong> ${verdictReason}
+    </p>
 
     ${strengths.length ? `
     <p style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">✅ نقاط القوة</p>
