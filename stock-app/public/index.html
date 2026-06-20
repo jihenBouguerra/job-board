@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>محلل الأسهم الاحترافي</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== LOGIN GATE ===== -->
+  <div id="loginGate" class="login-gate" hidden>
+    <div class="login-card">
+      <div class="login-logo">📈</div>
+      <h2>محلل الأسهم</h2>
+      <p class="login-sub">منهجية B.A.M الاحترافية</p>
+      <form id="loginForm" autocomplete="off">
+        <input
+          id="passwordInput"
+          type="password"
+          placeholder="كلمة المرور"
+          autocomplete="current-password"
+          autofocus
+        />
+        <button type="submit" class="btn-primary login-btn">🔐 دخول</button>
+        <p class="login-error" id="loginError" hidden></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="app">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span>📁 الأسهم المحفوظة</span>
+        <button class="icon-btn" id="closeSidebar" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="saved-list" id="savedList">
+        <p class="empty-saved">لا توجد أسهم محفوظة بعد</p>
+      </div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+
+      <!-- Header -->
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="القائمة">☰</button>
+        <div class="topbar-title">
+          <span class="topbar-logo">📈</span>
+          <div>
+            <h1>محلل الأسهم</h1>
+            <p>منهجية B.A.M الاحترافية</p>
+          </div>
+        </div>
+        <span class="badge">PRO</span>
+        <button class="icon-btn logout-btn" id="logoutBtn" title="تسجيل الخروج">⏏</button>
+      </header>
+
+      <!-- Search -->
+      <section class="search-section">
+        <div class="search-row">
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="رمز السهم (AAPL، NVDA، TSLA...)"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+          />
+          <button class="btn-primary" id="searchBtn">🔍 تحليل</button>
+        </div>
+        <div class="quick-chips">
+          <span class="chip-label">أسهم شائعة:</span>
+          <button class="chip" data-sym="AAPL">AAPL</button>
+          <button class="chip" data-sym="NVDA">NVDA</button>
+          <button class="chip" data-sym="TSLA">TSLA</button>
+          <button class="chip" data-sym="MSFT">MSFT</button>
+          <button class="chip" data-sym="AMZN">AMZN</button>
+          <button class="chip" data-sym="META">META</button>
+        </div>
+      </section>
+
+      <!-- States -->
+      <div id="loadingState" class="state-box" hidden>
+        <div class="spinner"></div>
+        <p>جاري جلب بيانات السهم وتحليلها…</p>
+      </div>
+
+      <div id="errorState" class="state-box error" hidden>
+        <div class="state-icon">⚠️</div>
+        <p id="errorMsg"></p>
+        <button class="btn-secondary" id="retryBtn">إعادة المحاولة</button>
+      </div>
+
+      <!-- Analysis -->
+      <div id="analysisContent" hidden>
+
+        <!-- Stock Header Card -->
+        <div class="stock-hero" id="stockHero"></div>
+
+        <!-- 8 Analysis Sections -->
+        <div class="sections" id="sections"></div>
+
+        <!-- Notes -->
+        <div class="card notes-card">
+          <h3 class="card-title">📝 ملاحظاتي الاستثمارية</h3>
+          <textarea id="notesInput" placeholder="أضف ملاحظاتك وأهدافك الاستثمارية…" rows="4"></textarea>
+          <button class="btn-secondary" id="saveNotesBtn">💾 حفظ الملاحظات</button>
+          <span class="save-feedback" id="saveFeedback"></span>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-row">
+          <button class="btn-secondary" id="refreshBtn">🔄 تحديث البيانات</button>
+          <button class="btn-danger" id="deleteBtn">🗑️ حذف السهم</button>
+        </div>
+
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="state-box">
+        <div class="state-icon">📊</div>
+        <h3>ابدأ بتحليل سهم</h3>
+        <p>أدخل رمز أي سهم للحصول على تحليل احترافي شامل بمنهجية B.A.M</p>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
